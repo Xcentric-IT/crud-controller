@@ -14,7 +14,7 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
         /*
          * Optional methods to load your package assets
          */
-         $this->loadRoutesFrom(__DIR__.'/routes.php');
+         $this->loadRoutesFrom(__DIR__.'/routes/api.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
