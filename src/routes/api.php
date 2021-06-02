@@ -6,6 +6,10 @@ use XcentricItFoundation\LaravelCrudController\LaravelCrudController;
 
 $url = '';
 
+if (config('laravel-crud-controller.routes-prefix')) {
+    $url = config('laravel-crud-controller.routes-prefix') . '/';
+}
+
 if (config('laravel-crud-controller.has-multiple-namespaces')) {
     $url = '{namespace}/';
 }
