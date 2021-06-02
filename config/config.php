@@ -6,4 +6,5 @@
 return [
     'has-multiple-namespaces' => false,
     'routes-prefix' => 'api',
+    'middlewares' => [],
 ];

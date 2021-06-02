@@ -16,24 +16,28 @@ if (config('laravel-crud-controller.has-multiple-namespaces')) {
 
 $url .= '{model}';
 
-Route::get($url, function (string $model, $namespace = 'app') {
-    return resolveOrFail($namespace, $model)->readMore();
-});
+$middleware = config('laravel-crud-controller.middlewares') ?? [];
 
-Route::get($url . '/{id}', function (string $model, $id, $namespace = 'app') {
-    return resolveOrFail($namespace, $model)->readOne($id);
-});
+Route::group(['middleware' => $middleware], function ($router) use ($url) {
+    $router->get($url, function (string $model, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->readMore();
+    });
 
-Route::post($url, function (string $model, $namespace = 'app') {
-    return resolveOrFail($namespace, $model)->create();
-});
+    $router->get($url . '/{id}', function (string $model, $id, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->readOne($id);
+    });
 
-Route::put($url . '/{id}', function (string $model, $id, $namespace = 'app') {
-    return resolveOrFail($namespace, $model)->update($id);
-});
+    $router->post($url, function (string $model, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->create();
+    });
 
-Route::delete($url . '/{id}', function (string $model, $id, $namespace = 'app') {
-    return resolveOrFail($namespace, $model)->delete($id);
+    $router->put($url . '/{id}', function (string $model, $id, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->update($id);
+    });
+
+    $router->delete($url . '/{id}', function (string $model, $id, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->delete($id);
+    });
 });
 
 if (!function_exists('resolveOrFail')) {
