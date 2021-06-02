@@ -1,0 +1,44 @@
+{
+    "name": "xcentricitfoundation/laravel-crud-controller",
+    "description": "",
+    "keywords": [
+        "xcentricitfoundation",
+        "laravel-crud-controller"
+    ],
+    "homepage": "https://gitlab.com/xcentric-it-foundation/laravel-crud-controller",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Dusan Jankovic",
+            "email": "info@xcentric.it",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^8.0",
+        "spatie/laravel-query-builder": "^3.3"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "XcentricItFoundation\\LaravelCrudController\\": "src"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "XcentricItFoundation\\LaravelCrudController\\LaravelCrudControllerServiceProvider"
+            ],
+            "aliases": {
+                "LaravelCrudController": "XcentricItFoundation\\LaravelCrudController\\LaravelCrudControllerFacade"
+            }
+        }
+    }
+}
