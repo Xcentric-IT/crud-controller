@@ -39,7 +39,7 @@ Route::delete($url . '/{id}', function (string $model, $id, $namespace = 'app') 
 if (!function_exists('resolveOrFail')) {
     function resolveOrFail(string $namespace, string $model): LaravelCrudController
     {
-        $controllerClass = ModelHelper::getControllerNamespace($namespace, $model);
+        $controllerClass = ModelHelper::getControllerNamespace($model, $namespace);
 
         if (class_exists($controllerClass)) {
             return resolve($controllerClass);

@@ -38,7 +38,7 @@ class LaravelCrudController extends BaseController
 
     public function getRequestValidator(): FormRequest
     {
-        $controllerClass = ModelHelper::getRequestValidatorNamespace($this->request->get('namespace'), $this->request->get('model'));
+        $controllerClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
 
         if (class_exists($controllerClass)) {
             return resolve($controllerClass);
@@ -49,7 +49,7 @@ class LaravelCrudController extends BaseController
 
     public function getModelName(): string
     {
-        return ModelHelper::getModelNamespace($this->request->get('namespace'), $this->request->get('model'));
+        return ModelHelper::getModelNamespace($this->request->route('model'), $this->request->route('namespace'));
     }
 
     public function readOne(string $id): JsonResource
