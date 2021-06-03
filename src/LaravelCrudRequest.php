@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace XcentricItFoundation\LaravelCrudController;
 
 
 use Illuminate\Foundation\Http\FormRequest;
