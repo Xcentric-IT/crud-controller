@@ -3,6 +3,7 @@
 namespace XcentricItFoundation\LaravelCrudController;
 
 
+use App\Http\Requests\LaravelCrudRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,13 +39,13 @@ class LaravelCrudController extends BaseController
 
     public function getRequestValidator(): FormRequest
     {
-        $controllerClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
+        $requestValidatorClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
 
-        if (class_exists($controllerClass)) {
-            return resolve($controllerClass);
+        if (class_exists($requestValidatorClass)) {
+            return resolve($requestValidatorClass);
         }
 
-        return resolve(FormRequest::class);
+        return resolve(LaravelCrudRequest::class);
     }
 
     public function getModelName(): string
