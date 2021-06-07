@@ -36,12 +36,12 @@ class LaravelCrudController extends BaseController
         $this->request = $request;
     }
 
-    public function getRequestValidator(): FormRequest
+    public function getRequestValidator(): LaravelCrudRequest
     {
-        $requestValidatorClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
+        $controllerClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
 
-        if (class_exists($requestValidatorClass)) {
-            return resolve($requestValidatorClass);
+        if (class_exists($controllerClass)) {
+            return resolve($controllerClass);
         }
 
         return resolve(LaravelCrudRequest::class);
@@ -72,7 +72,7 @@ class LaravelCrudController extends BaseController
      */
     public function create(): JsonResource
     {
-        $data = $this->getRequestValidator()->validated();
+        $data = $this->getRequestValidator()->validate();
         $model = $this->createModel();
         $data = $this->resolveRelationFields($model, $data);
         $this->beforeCreate($model);
@@ -88,7 +88,7 @@ class LaravelCrudController extends BaseController
      */
     public function update(string $id): JsonResource
     {
-        $data = $this->getRequestValidator()->validated();
+        $data = $this->getRequestValidator()->validate();
 
         $model = $this->createNewModelQuery()->find($id);
         $data = $this->resolveRelationFields($model, $data);
