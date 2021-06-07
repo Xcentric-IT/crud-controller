@@ -2,10 +2,8 @@
 
 namespace XcentricItFoundation\LaravelCrudController;
 
-use XcentricItFoundation\LaravelCrudController\Filters\FiltersIsNull;
+use XcentricItFoundation\LaravelCrudController\Filter\LaravelCrudFilter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 trait ParsesQuery
@@ -33,14 +31,8 @@ trait ParsesQuery
      */
     public function parseFilters(Request $request, QueryBuilder $queryBuilder): self
     {
-        $filters = $request->input('filter', []);
-        $allowedFilters = [];
-
-        foreach ($filters as $filterName => $filterValue) {
-            $allowedFilters[] = $this->getFilterMapping($filterName, $filterValue);
-        }
-
-        $queryBuilder->allowedFilters($allowedFilters);
+        $filterService = new LaravelCrudFilter();
+        $filterService->parseFilters($request, $queryBuilder);
 
         return $this;
     }
@@ -77,24 +69,6 @@ trait ParsesQuery
     protected function getSortMapping(string $sort): string
     {
         return $sort;
-    }
-
-    /**
-     * @param string $filter
-     * @param string|null $value
-     * @return AllowedFilter
-     */
-    protected function getFilterMapping(string $filter, ?string $value): AllowedFilter
-    {
-        if ($value === 'null') {
-            return AllowedFilter::custom($filter, new FiltersIsNull);
-        }
-
-        if (Str::endsWith($filter, ['_id', '.id'])) {
-            return AllowedFilter::exact($filter);
-        }
-
-        return AllowedFilter::partial($filter);
     }
 
     /**
