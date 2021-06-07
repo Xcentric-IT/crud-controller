@@ -72,7 +72,8 @@ class LaravelCrudController extends BaseController
      */
     public function create(): JsonResource
     {
-        $data = $this->getRequestValidator()->validate();
+        $data = $this->request->all();
+        $this->getRequestValidator()->validate();
         $model = $this->createModel();
         $data = $this->resolveRelationFields($model, $data);
         $this->beforeCreate($model);
@@ -88,7 +89,8 @@ class LaravelCrudController extends BaseController
      */
     public function update(string $id): JsonResource
     {
-        $data = $this->getRequestValidator()->validate();
+        $data = $this->request->all();
+        $this->getRequestValidator()->validate();
 
         $model = $this->createNewModelQuery()->find($id);
         $data = $this->resolveRelationFields($model, $data);
