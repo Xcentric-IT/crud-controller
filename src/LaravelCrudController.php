@@ -7,6 +7,10 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -75,9 +79,10 @@ class LaravelCrudController extends BaseController
         $data = $this->request->all();
         $this->getRequestValidator()->validate();
         $model = $this->createModel();
-        $data = $this->resolveRelationFields($model, $data);
+        [$data, $relations] = $this->parseRelationships($model, $data);
         $this->beforeCreate($model);
         $model->fill($data)->save();
+        $this->fillRelationships($model, $relations);
         $this->afterCreate($model);
 
         return $this->createResource($model);
@@ -93,9 +98,10 @@ class LaravelCrudController extends BaseController
         $this->getRequestValidator()->validate();
 
         $model = $this->createNewModelQuery()->find($id);
-        $data = $this->resolveRelationFields($model, $data);
         $this->beforeUpdate($model);
+        [$data, $relations] = $this->parseRelationships($model, $data);
         $model->fill($data)->save();
+        $this->fillRelationships($model, $relations);
         $this->afterUpdate($model);
         return $this->createResource($model);
     }
@@ -156,28 +162,69 @@ class LaravelCrudController extends BaseController
         return BaseResource::collection($resource);
     }
 
-    /**
-     * @param Model $model
-     * @param array $data
-     * @return array
-     */
-    private function resolveRelationFields(Model $model, array $data): array
+    private function parseRelationships(Model $model, array $data)
     {
         $parsedData = [];
-
+        $parsedRelationData = [];
         foreach ($data as $key => $item) {
-            if (is_array($item)) {
-                $relationField = "{$key}_id";
+            if ($model->isRelation($key)) {
+                if ($model->isFillable($key)) {
+                    $parsedRelationData[$key] = $item;
+                } elseif ($model->isFillable($key . '_id')) {
+                    $parsedData[$key . '_id'] = array_key_exists('id', $item) ? $item['id'] : null;;
+                }
+            } else {
+                $parsedData[$key] = $item;
+            }
+        }
+        return [$parsedData, $parsedRelationData];
+    }
 
-                if ($model->isFillable($relationField)) {
-                    $key = $relationField;
-                    $item = $item['id'] ?? null;
+    private function fillRelationships(Model $model, array $data): void
+    {
+        foreach ($data as $key => $item) {
+            if ($model->isRelation($key) && $model->isFillable($key)) {
+                $relationship_type = get_class($model->$key());
+                switch ($relationship_type) {
+                    case BelongsToMany::class:
+                    case MorphMany::class:
+                    case HasMany::class:
+                        $this->syncHasManyRelationship($model, $key, $item);
+                        break;
+                    case BelongsTo::class:
+                        $this->syncBelongsToRelationship($model, $key, $item);
+                        break;
+                    default:
+                        break;
                 }
             }
+        }
+    }
 
-            $parsedData[$key] = $item;
+    /**
+     * @param Model $model
+     * @param $relationship_name
+     * @param array $data
+     */
+    private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
+    {
+        $present_ids = [];
+        foreach ($data as $related) {
+            $present_ids[] = array_key_exists('id', $related) ? $related['id'] : null;
         }
 
-        return $parsedData;
+        $model->$relationship_name()->syncWithPivotValues($present_ids, ['created_at'=>new \DateTime()]);
+    }
+
+    /**
+     * @param Model  $model
+     * @param string $relationship_name
+     * @param array  $data
+     * @return mixed
+     */
+    private function syncBelongsToRelationship(Model $model, $relationship_name, array $data)
+    {
+        $present_id = array_key_exists('id', $data) ? $data['id'] : null;
+        return $model->$relationship_name()->associate($present_id);
     }
 }
