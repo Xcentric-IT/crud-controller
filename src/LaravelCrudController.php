@@ -79,7 +79,7 @@ class LaravelCrudController extends BaseController
         $data = $this->request->all();
         $this->getRequestValidator()->validate();
         $model = $this->createModel();
-        [$data, $relations] = $this->parseRelationships($model, $data);
+        [$data, $relations] = $this->resolveRelationFields($model, $data);
         $this->beforeCreate($model);
         $model->fill($data)->save();
         $this->fillRelationships($model, $relations);
@@ -99,7 +99,7 @@ class LaravelCrudController extends BaseController
 
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
-        [$data, $relations] = $this->parseRelationships($model, $data);
+        [$data, $relations] = $this->resolveRelationFields($model, $data);
         $model->fill($data)->save();
         $this->fillRelationships($model, $relations);
         $this->afterUpdate($model);
@@ -162,7 +162,7 @@ class LaravelCrudController extends BaseController
         return BaseResource::collection($resource);
     }
 
-    private function parseRelationships(Model $model, array $data)
+    private function resolveRelationFields(Model $model, array $data)
     {
         $parsedData = [];
         $parsedRelationData = [];
