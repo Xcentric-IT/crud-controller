@@ -211,6 +211,12 @@ class LaravelCrudController extends BaseController
         $present_ids = [];
         foreach ($data as $related) {
             $present_ids[] = array_key_exists('id', $related) ? $related['id'] : null;
+            if ($related['isChanged']) {
+                /** @var Model $subModel */
+                $subModel = $model->$relationship_name()->getRelated();
+                $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
+                $subModel->fill($related)->save();
+            }
         }
 
         $model->$relationship_name()->syncWithPivotValues($present_ids, ['created_at'=>new \DateTime()]);
