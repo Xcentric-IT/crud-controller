@@ -210,16 +210,19 @@ class LaravelCrudController extends BaseController
     {
         $present_ids = [];
         foreach ($data as $related) {
-            $present_ids[] = array_key_exists('id', $related) ? $related['id'] : null;
+            $id = array_key_exists('id', $related) ? $related['id'] : null;
+            $relation = $model->$relationship_name();
+            $present_ids[$id] = $this->getPivotColumnData($relation, $related['pivot'] ?? []);
+
             if ($related['isChanged']) {
                 /** @var Model $subModel */
-                $subModel = $model->$relationship_name()->getRelated();
+                $subModel = $relation->getRelated();
                 $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
                 $subModel->fill($related)->save();
             }
         }
 
-        $model->$relationship_name()->syncWithPivotValues($present_ids, ['created_at'=>new \DateTime()]);
+        $model->$relationship_name()->sync($present_ids);
     }
 
     /**
@@ -232,5 +235,25 @@ class LaravelCrudController extends BaseController
     {
         $present_id = array_key_exists('id', $data) ? $data['id'] : null;
         return $model->$relationship_name()->associate($present_id);
+    }
+
+    /**
+     * @param BelongsToMany $relation
+     * @param array $data
+     * @return array
+     */
+    private function getPivotColumnData(BelongsToMany $relation, array $data): array
+    {
+        $pivotData = [];
+        foreach ($data as $key => $value) {
+            if (
+                in_array($key, $relation->getPivotColumns())
+                && $key !== $relation->getParent()->getCreatedAtColumn()
+                && $key !== $relation->getParent()->getUpdatedAtColumn()
+            ) {
+                $pivotData[$key] = $value;
+            }
+        }
+        return $pivotData;
     }
 }
