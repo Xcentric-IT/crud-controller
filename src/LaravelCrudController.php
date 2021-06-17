@@ -214,7 +214,7 @@ class LaravelCrudController extends BaseController
             $relation = $model->$relationship_name();
             $present_ids[$id] = $this->getPivotColumnData($relation, $related['pivot'] ?? []);
 
-            if ($related['isChanged']) {
+            if (isset($related['isChanged'])) {
                 /** @var Model $subModel */
                 $subModel = $relation->getRelated();
                 $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
