@@ -170,7 +170,7 @@ class LaravelCrudController extends BaseController
             if ($model->isRelation($key)) {
                 if ($model->isFillable($key)) {
                     $parsedRelationData[$key] = $item;
-                } elseif ($model->isFillable($key . '_id')) {
+                } elseif ($model->isFillable($key . '_id') && is_array($item)) {
                     $parsedData[$key . '_id'] = array_key_exists('id', $item) ? $item['id'] : null;;
                 }
             } else {
@@ -214,7 +214,7 @@ class LaravelCrudController extends BaseController
             $relation = $model->$relationship_name();
             $present_ids[$id] = $this->getPivotColumnData($relation, $related['pivot'] ?? []);
 
-            if (isset($related['isChanged'])) {
+            if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
                 $subModel = $relation->getRelated();
                 $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
