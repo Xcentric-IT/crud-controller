@@ -242,11 +242,9 @@ class LaravelCrudController extends BaseController
                 /** @var Model $subModel */
                 $subModel = $model->$relationship_name()->getRelated();
                 $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
-                $subModel->fill($related)->save();
+                $model->$relationship_name()->create($related);
             }
         }
-
-        $model->$relationship_name()->sync($present_ids);
     }
 
     /**
