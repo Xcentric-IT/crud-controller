@@ -170,8 +170,8 @@ class LaravelCrudController extends BaseController
             if ($model->isRelation($key)) {
                 if ($model->isFillable($key)) {
                     $parsedRelationData[$key] = $item;
-                } elseif ($model->isFillable($key . '_id') && is_array($item)) {
-                    $parsedData[$key . '_id'] = array_key_exists('id', $item) ? $item['id'] : null;;
+                } elseif ($model->isFillable($key . '_id')) {
+                    $parsedData[$key . '_id'] = (!empty($item)  && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;;
                 }
             } else {
                 $parsedData[$key] = $item;
@@ -187,6 +187,8 @@ class LaravelCrudController extends BaseController
                 $relationship_type = get_class($model->$key());
                 switch ($relationship_type) {
                     case BelongsToMany::class:
+                        $this->syncBelongsToManyRelationship($model, $key, $item);
+                        break;
                     case MorphMany::class:
                     case HasMany::class:
                         $this->syncHasManyRelationship($model, $key, $item);
@@ -206,7 +208,7 @@ class LaravelCrudController extends BaseController
      * @param $relationship_name
      * @param array $data
      */
-    private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
+    private function syncBelongsToManyRelationship(Model $model, $relationship_name, array $data)
     {
         $present_ids = [];
         foreach ($data as $related) {
@@ -217,6 +219,28 @@ class LaravelCrudController extends BaseController
             if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
                 $subModel = $relation->getRelated();
+                $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
+                $subModel->fill($related)->save();
+            }
+        }
+
+        $model->$relationship_name()->sync($present_ids);
+    }
+
+    /**
+     * @param Model $model
+     * @param $relationship_name
+     * @param array $data
+     */
+    private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
+    {
+        $present_ids = [];
+        foreach ($data as $related) {
+            $id = array_key_exists('id', $related) ? $related['id'] : null;
+            $present_ids[] = $id;
+            if (isset($related['DIRTY'])) {
+                /** @var Model $subModel */
+                $subModel = $model->$relationship_name()->getRelated();
                 $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
                 $subModel->fill($related)->save();
             }
