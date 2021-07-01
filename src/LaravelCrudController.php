@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Str;
 
 class LaravelCrudController extends BaseController
 {
@@ -167,8 +168,9 @@ class LaravelCrudController extends BaseController
         $parsedData = [];
         $parsedRelationData = [];
         foreach ($data as $key => $item) {
-            if ($model->isRelation($key)) {
-                if ($model->isFillable($key)) {
+            $key_camel = Str::camel($key);
+            if ($model->isRelation($key_camel)) {
+                if ($model->isFillable($key) || $model->isFillable($key_camel)) {
                     $parsedRelationData[$key] = $item;
                 } elseif ($model->isFillable($key . '_id')) {
                     $parsedData[$key . '_id'] = (!empty($item)  && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;;
@@ -183,18 +185,19 @@ class LaravelCrudController extends BaseController
     private function fillRelationships(Model $model, array $data): void
     {
         foreach ($data as $key => $item) {
-            if ($model->isRelation($key) && $model->isFillable($key)) {
-                $relationship_type = get_class($model->$key());
+            $key_camel = Str::camel($key);
+            if ($model->isRelation($key_camel) && ($model->isFillable($key) || $model->isFillable($key_camel))) {
+                $relationship_type = get_class($model->$key_camel());
                 switch ($relationship_type) {
                     case BelongsToMany::class:
-                        $this->syncBelongsToManyRelationship($model, $key, $item);
+                        $this->syncBelongsToManyRelationship($model, $key_camel, $item);
                         break;
                     case MorphMany::class:
                     case HasMany::class:
-                        $this->syncHasManyRelationship($model, $key, $item);
+                        $this->syncHasManyRelationship($model, $key_camel, $item);
                         break;
                     case BelongsTo::class:
-                        $this->syncBelongsToRelationship($model, $key, $item);
+                        $this->syncBelongsToRelationship($model, $key_camel, $item);
                         break;
                     default:
                         break;
@@ -241,8 +244,18 @@ class LaravelCrudController extends BaseController
             if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
                 $subModel = $model->$relationship_name()->getRelated();
-                $subModel = $subModel->newModelQuery()->find($related['id']) ?? $subModel;
-                $model->$relationship_name()->create($related);
+                $subModel = $subModel->newModelQuery()->find($related['id']);
+                if ($subModel) {
+                    $subModel->fill($related)->save();
+                    $model->$relationship_name()->save($subModel);
+                } else {
+                    $model->$relationship_name()->create($related);
+                }
+            } else {
+                /** @var Model $subModel */
+                $subModel = $model->$relationship_name()->getRelated();
+                $subModel = $subModel->newModelQuery()->find($related['id']);
+                $model->$relationship_name()->save($subModel);
             }
         }
     }
