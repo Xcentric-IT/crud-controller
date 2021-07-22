@@ -6,6 +6,7 @@ namespace XcentricItFoundation\LaravelCrudController\Filter;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Str;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterDateSearch;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterAfterDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterBeforeDate;
@@ -48,7 +49,7 @@ class LaravelCrudFilter
     protected function getFilterMapping(string $property, ?string $value): AllowedFilter
     {
         $filter = $property;
-        if (str_contains($property, ':')) {
+        if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
             if ($this->availableFilters[$filter]) {

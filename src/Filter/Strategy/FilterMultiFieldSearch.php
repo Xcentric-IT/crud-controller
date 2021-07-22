@@ -5,12 +5,13 @@ namespace XcentricItFoundation\LaravelCrudController\Filter\Strategy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filters\Filter;
+use Illuminate\Support\Str;
 
 class FilterMultiFieldSearch implements Filter
 {
     public function __invoke(Builder $query, $value, string $property): void
     {
-        if (str_contains($property, ':')) {
+        if (Str::contains($property, ':')) {
             $property = explode(':', $property)[1];
         }
 
@@ -20,7 +21,7 @@ class FilterMultiFieldSearch implements Filter
                 $subQuery->orWhere($aProperty, 'LIKE', '%' . $value . '%');
             }
 
-            if(str_contains($value, ' ')){
+            if(Str::contains($value, ' ')){
                 $combinations = $this->combinations($properties);
                 foreach ($combinations as $combination){
                     $subQuery->orWhereRaw(sprintf('CONCAT_WS(\' \', %s)', implode(', ', $combination)) . ' LIKE ' . sprintf('\'%%%s%%\'', $value));
