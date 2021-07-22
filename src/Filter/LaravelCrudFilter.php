@@ -6,6 +6,10 @@ namespace XcentricItFoundation\LaravelCrudController\Filter;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Str;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterDateSearch;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterAfterDate;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterBeforeDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterExact;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
@@ -20,6 +24,9 @@ class LaravelCrudFilter
         'isNull' => FilterIsNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
         'eq' => FilterExact::class,
+        'beforeDate' => FilterBeforeDate::class,
+        'afterDate' => FilterAfterDate::class,
+        'dateSearch' => FilterDateSearch::class
     ];
 
     public function parseFilters(Request $request, QueryBuilder $queryBuilder): void
@@ -42,7 +49,7 @@ class LaravelCrudFilter
     protected function getFilterMapping(string $property, ?string $value): AllowedFilter
     {
         $filter = $property;
-        if (str_contains($property, ':')) {
+        if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
             if ($this->availableFilters[$filter]) {
