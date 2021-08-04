@@ -109,6 +109,22 @@ class LaravelCrudController extends BaseController
 
     /**
      * @param string $id
+     * @return JsonResource
+     */
+    public function addRemoveRelation(string $id, string $relationField, bool $add = true): JsonResource
+    {
+        $data = $this->request->all();
+        $this->getRequestValidator()->validate();
+
+        $model = $this->createNewModelQuery()->find($id);
+        $this->beforeUpdate($model);
+        $this->addRemoveRelationships($model, $relationField, $data, $add);
+        $this->afterUpdate($model);
+        return $this->createResource($model);
+    }
+
+    /**
+     * @param string $id
      * @return JsonResponse
      * @throws \Exception
      */
@@ -206,6 +222,21 @@ class LaravelCrudController extends BaseController
         }
     }
 
+    private function addRemoveRelationships(Model $model, string $relationField, array $item, bool $add = true): void
+    {
+        $key_camel = Str::camel($relationField);
+        if ($model->isRelation($key_camel) && ($model->isFillable($relationField) || $model->isFillable($key_camel))) {
+            $relationship_type = get_class($model->$key_camel());
+            switch ($relationship_type) {
+                case BelongsToMany::class:
+                    $this->appendDetachBelongsToManyRelationship($model, $key_camel, $item, $add);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     /**
      * @param Model $model
      * @param $relationship_name
@@ -228,6 +259,32 @@ class LaravelCrudController extends BaseController
         }
 
         $model->$relationship_name()->sync($present_ids);
+    }
+
+    /**
+     * @param Model $model
+     * @param $relationship_name
+     * @param array $data
+     */
+    private function appendDetachBelongsToManyRelationship(Model $model, $relationship_name, array $data, bool $append = true)
+    {
+        $present_ids = [];
+        $id = array_key_exists('id', $data) ? $data['id'] : null;
+        $relation = $model->$relationship_name();
+        $present_ids[$id] = $append ? $this->getPivotColumnData($relation, $data['pivot'] ?? []) : $id;
+
+        if (isset($data['DIRTY'])) {
+            /** @var Model $subModel */
+            $subModel = $relation->getRelated();
+            $subModel = $subModel->newModelQuery()->find($data['id']) ?? $subModel;
+            $subModel->fill($data)->save();
+        }
+
+        if ($append) {
+            $model->$relationship_name()->syncWithoutDetaching($present_ids);
+        } else {
+            $model->$relationship_name()->detach($present_ids);
+        }
     }
 
     /**

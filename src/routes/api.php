@@ -38,6 +38,14 @@ Route::group(['middleware' => $middleware], function ($router) use ($url) {
     $router->delete($url . '/{id}', function (string $model, $id, $namespace = 'app') {
         return resolveOrFail($namespace, $model)->delete($id);
     });
+
+    $router->put($url . '/{id}/relation/{relationField}', function (string $model, $id, $relationField, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->addRemoveRelation($id, $relationField);
+    });
+
+    $router->delete($url . '/{id}/relation/{relationField}', function (string $model, $id, $relationField, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->addRemoveRelation($id, $relationField, false);
+    });
 });
 
 if (!function_exists('resolveOrFail')) {
