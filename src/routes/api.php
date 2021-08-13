@@ -43,8 +43,8 @@ Route::group(['middleware' => $middleware], function ($router) use ($url) {
         return resolveOrFail($namespace, $model)->addRemoveRelation($id, $relationField);
     });
 
-    $router->delete($url . '/{id}/relation/{relationField}', function (string $model, $id, $relationField, $namespace = 'app') {
-        return resolveOrFail($namespace, $model)->addRemoveRelation($id, $relationField, false);
+    $router->delete($url . '/{id}/relation/{relationField}/{relationId}', function (string $model, $id, $relationField, $relationId, $namespace = 'app') {
+        return resolveOrFail($namespace, $model)->addRemoveRelation($id, $relationField, $relationId, false);
     });
 });
 

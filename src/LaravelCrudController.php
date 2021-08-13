@@ -111,9 +111,9 @@ class LaravelCrudController extends BaseController
      * @param string $id
      * @return JsonResource
      */
-    public function addRemoveRelation(string $id, string $relationField, bool $add = true): JsonResource
+    public function addRemoveRelation(string $id, string $relationField, string $relationId = null, bool $add = true): JsonResource
     {
-        $data = $this->request->all();
+        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
         $this->getRequestValidator()->validate();
 
         $model = $this->createNewModelQuery()->find($id);
