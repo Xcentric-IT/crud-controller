@@ -3,11 +3,13 @@
 namespace XcentricItFoundation\LaravelCrudController\Filter\Strategy;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\Filters\Filter;
 use Illuminate\Support\Str;
+use Spatie\QueryBuilder\Filters\FiltersExact;
 
-class FilterMultiFieldSearch implements Filter
+class FilterMultiFieldSearch extends FiltersExact implements Filter
 {
     public function __invoke(Builder $query, $value, string $property): void
     {
@@ -15,10 +17,20 @@ class FilterMultiFieldSearch implements Filter
             $property = explode(':', $property)[1];
         }
 
-        $query->where(function(Builder $subQuery) use ($value, $property) {
+        $query->where(function(Builder $subQuery) use ($value, $property, $query) {
             $properties = explode(',', $property);
             foreach ($properties as $aProperty) {
-                $subQuery->orWhere($aProperty, 'LIKE', '%' . $value . '%');
+                if ($this->addRelationConstraint) {
+                    if ($this->isRelationProperty($subQuery, $aProperty)) {
+                        $this->withRelationConstraint($subQuery, $value, $aProperty);
+
+                        return;
+                    }
+                }
+
+                $wrappedProperty = $subQuery->qualifyColumn($aProperty);
+
+                $subQuery->orWhere($wrappedProperty, 'LIKE', '%' . $value . '%');
             }
 
             if(Str::contains($value, ' ')){
@@ -28,6 +40,7 @@ class FilterMultiFieldSearch implements Filter
                 }
             }
         });
+        $a = $query->toSql();
     }
 
     protected function combinations(array $array): array
@@ -53,5 +66,22 @@ class FilterMultiFieldSearch implements Filter
             return $newArray;
         }
         return $array;
+    }
+
+    protected function withRelationConstraint(Builder $query, $value, string $property)
+    {
+        [$relation, $property] = collect(explode('.', $property))
+            ->pipe(function (Collection $parts) {
+                return [
+                    $parts->except(count($parts) - 1)->map([Str::class, 'camel'])->implode('.'),
+                    $parts->last(),
+                ];
+            });
+
+        $query->orWhereHas($relation, function (Builder $query) use ($value, $property) {
+            $this->relationConstraints[] = $property = $query->qualifyColumn($property);
+
+            $this->__invoke($query, $value, $property);
+        });
     }
 }
