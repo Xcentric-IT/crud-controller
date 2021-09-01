@@ -294,26 +294,33 @@ class LaravelCrudController extends BaseController
      */
     private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
     {
-        $present_ids = [];
+        $unSyncedSubModels = $model->$relationship_name()->pluck('id')->all();
         foreach ($data as $related) {
             $id = array_key_exists('id', $related) ? $related['id'] : null;
-            $present_ids[] = $id;
             if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
                 $subModel = $model->$relationship_name()->getRelated();
-                $subModel = $subModel->newModelQuery()->find($related['id']);
+                $subModel = $subModel->newModelQuery()->find($id);
                 if ($subModel) {
                     $subModel->fill($related)->save();
                     $model->$relationship_name()->save($subModel);
                 } else {
-                    $model->$relationship_name()->create($related);
+                    $subModel = $model->$relationship_name()->create($related);
                 }
             } else {
                 /** @var Model $subModel */
                 $subModel = $model->$relationship_name()->getRelated();
-                $subModel = $subModel->newModelQuery()->find($related['id']);
-                $model->$relationship_name()->save($subModel);
+                $subModel = $subModel->newModelQuery()->find($id);
+                $model->tasks()->save($subModel);
             }
+
+            if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
+                unset($unSyncedSubModels[$index]);
+            }
+        }
+
+        foreach ($unSyncedSubModels as $unSyncedSubModel) {
+            $model->$relationship_name()->where('id', '=', $unSyncedSubModel)->delete();
         }
     }
 
