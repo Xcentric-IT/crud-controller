@@ -206,6 +206,7 @@ class LaravelCrudController extends BaseController
                 $relationship_type = get_class($model->$key_camel());
                 switch ($relationship_type) {
                     case BelongsToMany::class:
+                    case MorphToMany::class:
                         $this->syncBelongsToManyRelationship($model, $key_camel, $item);
                         break;
                     case MorphMany::class:
