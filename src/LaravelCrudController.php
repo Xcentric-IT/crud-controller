@@ -115,8 +115,12 @@ class LaravelCrudController extends BaseController
     public function addRemoveRelation(string $id, string $relationField, string $relationId = null, bool $add = true): JsonResource
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-        $this->getRequestValidator()->validate();
 
+        $this->request->validate([
+            'id' => 'required|string',
+        ],[
+            'id.required'=>$relationField . ' is requred.'
+        ]);
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
         $this->addRemoveRelationships($model, $relationField, $data, $add);
