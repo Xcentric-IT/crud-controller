@@ -116,11 +116,13 @@ class LaravelCrudController extends BaseController
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
 
-        $this->request->validate([
-            'id' => 'required|string',
-        ],[
-            'id.required'=>$relationField . ' is requred.'
-        ]);
+        if ($add) {
+            $this->request->validate([
+                'id' => 'required|string',
+            ],[
+                'id.required'=>$relationField . ' is requred.'
+            ]);
+        }
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
         $this->addRemoveRelationships($model, $relationField, $data, $add);
