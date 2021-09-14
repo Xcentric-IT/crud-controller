@@ -319,7 +319,7 @@ class LaravelCrudController extends BaseController
                 /** @var Model $subModel */
                 $subModel = $model->$relationship_name()->getRelated();
                 $subModel = $subModel->newModelQuery()->find($id);
-                $model->tasks()->save($subModel);
+                $model->$relationship_name()->save($subModel);
             }
 
             if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
