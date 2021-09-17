@@ -69,7 +69,7 @@ trait ParsesQuery
         return $this;
     }
 
-    protected function getSortMapping(string $sort): string
+    protected function getSortMapping(string $sort): string | AllowedSort
     {
         return Str::contains($sort, '.') ? AllowedSort::custom($sort, new SortByRelationField(), $sort) : $sort;
     }
