@@ -3,6 +3,7 @@
 namespace XcentricItFoundation\LaravelCrudController\Sort;
 
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\QueryBuilder\Sorts\Sort;
 
 class SortByRelationField implements Sort
 {
