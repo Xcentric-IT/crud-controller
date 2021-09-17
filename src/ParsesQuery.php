@@ -2,9 +2,12 @@
 
 namespace XcentricItFoundation\LaravelCrudController;
 
+use Illuminate\Support\Str;
+use Spatie\QueryBuilder\AllowedSort;
 use XcentricItFoundation\LaravelCrudController\Filter\LaravelCrudFilter;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\QueryBuilder;
+use XcentricItFoundation\LaravelCrudController\Sort\SortByRelationField;
 
 trait ParsesQuery
 {
@@ -68,7 +71,7 @@ trait ParsesQuery
 
     protected function getSortMapping(string $sort): string
     {
-        return $sort;
+        return Str::contains($sort, '.') ? AllowedSort::custom($sort, new SortByRelationField(), $sort) : $sort;
     }
 
     /**
