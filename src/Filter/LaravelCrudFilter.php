@@ -29,13 +29,13 @@ class LaravelCrudFilter
         'dateSearch' => FilterDateSearch::class
     ];
 
-    public function parseFilters(Request $request, QueryBuilder $queryBuilder): void
+    public function parseFilters(Request $request, QueryBuilder $queryBuilder, array $additionalFilters): void
     {
         $filters = $request->input('filter', []);
         $allowedFilters = [];
 
         foreach ($filters as $filterName => $filterValue) {
-            $allowedFilters[] = $this->getFilterMapping($filterName, $filterValue);
+            $allowedFilters[] = $this->getFilterMapping($filterName, $additionalFilters, $filterValue);
         }
 
         $queryBuilder->allowedFilters($allowedFilters);
@@ -46,14 +46,18 @@ class LaravelCrudFilter
      * @param string|null $value
      * @return AllowedFilter
      */
-    protected function getFilterMapping(string $property, ?string $value): AllowedFilter
+    protected function getFilterMapping(string $property, $additionalFilters, ?string $value): AllowedFilter
     {
         $filter = $property;
         if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
-            if ($this->availableFilters[$filter]) {
+            if (array_key_exists($filter, $this->availableFilters)) {
                 return AllowedFilter::custom($property, new $this->availableFilters[$filter]);
+            }
+
+            if (array_key_exists($filter, $additionalFilters)) {
+                return AllowedFilter::custom($property, new $additionalFilters[$filter]);
             }
         }
 

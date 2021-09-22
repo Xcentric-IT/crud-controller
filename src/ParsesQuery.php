@@ -11,6 +11,8 @@ use XcentricItFoundation\LaravelCrudController\Sort\SortByRelationField;
 
 trait ParsesQuery
 {
+    protected array $additionalFilters = [];
+
     /**
      * @param Request $request
      * @param string $model
@@ -35,7 +37,7 @@ trait ParsesQuery
     public function parseFilters(Request $request, QueryBuilder $queryBuilder): self
     {
         $filterService = new LaravelCrudFilter();
-        $filterService->parseFilters($request, $queryBuilder);
+        $filterService->parseFilters($request, $queryBuilder, $this->additionalFilters);
 
         return $this;
     }
