@@ -328,7 +328,8 @@ class LaravelCrudController extends BaseController
         }
 
         foreach ($unSyncedSubModels as $unSyncedSubModel) {
-            $model->$relationship_name()->where('id', '=', $unSyncedSubModel)->delete();
+            $record = $model->$relationship_name()->where('id', '=', $unSyncedSubModel)->first();
+            $record->delete();
         }
     }
 
