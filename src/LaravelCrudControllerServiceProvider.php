@@ -3,6 +3,7 @@
 namespace XcentricItFoundation\LaravelCrudController;
 
 use Illuminate\Support\ServiceProvider;
+use XcentricItFoundation\LaravelCrudController\Console\Commands\GenerateRoutes;
 
 class LaravelCrudControllerServiceProvider extends ServiceProvider
 {
@@ -14,13 +15,15 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
         /*
          * Optional methods to load your package assets
          */
-         $this->loadRoutesFrom(__DIR__.'/routes/api.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/config.php' => config_path('laravel-crud-controller.php'),
             ], 'config');
 
+            $this->commands([
+                GenerateRoutes::class
+            ]);
         }
     }
 
