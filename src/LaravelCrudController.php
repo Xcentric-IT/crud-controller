@@ -44,10 +44,10 @@ class LaravelCrudController extends BaseController
 
     public function getRequestValidator(): LaravelCrudRequest
     {
-        $controllerClass = ModelHelper::getRequestValidatorNamespace($this->request->route('model'), $this->request->route('namespace'));
+        $requestClass = ModelHelper::getRequestValidatorNamespace($this->request->route()->getAction('model'), $this->request->route()->getAction('namespace'));
 
-        if (class_exists($controllerClass)) {
-            return resolve($controllerClass);
+        if (class_exists($requestClass)) {
+            return resolve($requestClass);
         }
 
         return resolve(LaravelCrudRequest::class);
@@ -55,7 +55,7 @@ class LaravelCrudController extends BaseController
 
     public function getModelName(): string
     {
-        return ModelHelper::getModelNamespace($this->request->route('model'), $this->request->route('namespace'));
+        return ModelHelper::getModelNamespace($this->request->route()->getAction('model'), $this->request->route()->getAction('namespace'));
     }
 
     public function readOne(string $id): JsonResource
@@ -110,22 +110,38 @@ class LaravelCrudController extends BaseController
 
     /**
      * @param string $id
+     * @param string $relationField
+     * @param string|null $relationId
      * @return JsonResource
      */
-    public function addRemoveRelation(string $id, string $relationField, string $relationId = null, bool $add = true): JsonResource
-    {
+    public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
 
-        if ($add) {
-            $this->request->validate([
-                'id' => 'required|string',
-            ],[
-                'id.required'=>$relationField . ' is requred.'
-            ]);
-        }
+        $this->request->validate([
+            'id' => 'required|string',
+        ],[
+            'id.required'=>$relationField . ' is requred.'
+        ]);
+
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
-        $this->addRemoveRelationships($model, $relationField, $data, $add);
+        $this->addRemoveRelationships($model, $relationField, $data);
+        $this->afterUpdate($model);
+        return $this->createResource($model);
+    }
+
+    /**
+     * @param string $id
+     * @param string $relationField
+     * @param string|null $relationId
+     * @return JsonResource
+     */
+    public function removeRelation(string $id, string $relationField, string $relationId = null): JsonResource {
+        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
+
+        $model = $this->createNewModelQuery()->find($id);
+        $this->beforeUpdate($model);
+        $this->addRemoveRelationships($model, $relationField, $data, false);
         $this->afterUpdate($model);
         return $this->createResource($model);
     }
