@@ -39,6 +39,9 @@ class LaravelCrudRouteServiceProvider extends ServiceProvider
      */
     protected function registerModulesRoutes(): void
     {
+        if (File::exists(app()->basePath('modules')) === false) {
+            return;
+        }
         $modules = File::directories(app()->basePath('modules'));
         foreach ($modules as $module) {
             $this->registerModuleRoutes($module);
