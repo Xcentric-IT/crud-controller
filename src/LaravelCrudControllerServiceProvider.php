@@ -4,6 +4,7 @@ namespace XcentricItFoundation\LaravelCrudController;
 
 use Illuminate\Support\ServiceProvider;
 use XcentricItFoundation\LaravelCrudController\Console\Commands\GenerateRoutes;
+use XcentricItFoundation\LaravelCrudController\Providers\LaravelCrudRouteServiceProvider;
 
 class LaravelCrudControllerServiceProvider extends ServiceProvider
 {
@@ -39,5 +40,7 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
         $this->app->singleton('laravel-crud-controller', function () {
             return new LaravelCrudController;
         });
+        
+        $this->app->register(LaravelCrudRouteServiceProvider::class);
     }
 }
