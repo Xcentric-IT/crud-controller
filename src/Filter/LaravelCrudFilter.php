@@ -11,7 +11,11 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterDateSearch;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterAfterDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterBeforeDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterExact;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThan;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThan;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
 
 /**
@@ -26,7 +30,11 @@ class LaravelCrudFilter
         'eq' => FilterExact::class,
         'beforeDate' => FilterBeforeDate::class,
         'afterDate' => FilterAfterDate::class,
-        'dateSearch' => FilterDateSearch::class
+        'dateSearch' => FilterDateSearch::class,
+        'lt' => FilterLowerThan::class,
+        'lte' => FilterLowerThanOrEqual::class,
+        'gt' => FilterGreaterThan::class,
+        'gte' => FilterGreaterThanOrEqual::class,
     ];
 
     public function parseFilters(Request $request, QueryBuilder $queryBuilder, array $additionalFilters): void
