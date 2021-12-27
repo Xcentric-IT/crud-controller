@@ -209,10 +209,11 @@ class LaravelCrudController extends BaseController
         foreach ($data as $key => $item) {
             $key_camel = Str::camel($key);
             if ($model->isRelation($key_camel)) {
-                if ($model->isFillable($key) || $model->isFillable($key_camel)) {
-                    $parsedRelationData[$key] = $item;
-                } elseif ($model->isFillable($key . '_id')) {
+                $isFillable = !$model->isFillable($key) && $model->isFillable($key . '_id');
+                if ($isFillable) {
                     $parsedData[$key . '_id'] = (!empty($item)  && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;;
+                } else {
+                    $parsedRelationData[$key] = $item;
                 }
             } else {
                 $parsedData[$key] = $item;
@@ -225,7 +226,7 @@ class LaravelCrudController extends BaseController
     {
         foreach ($data as $key => $item) {
             $key_camel = Str::camel($key);
-            if ($model->isRelation($key_camel) && ($model->isFillable($key) || $model->isFillable($key_camel))) {
+            if ($model->isRelation($key_camel)) {
                 $relationship_type = get_class($model->$key_camel());
                 switch ($relationship_type) {
                     case BelongsToMany::class:
@@ -319,23 +320,17 @@ class LaravelCrudController extends BaseController
     private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
     {
         $unSyncedSubModels = $model->$relationship_name()->pluck('id')->all();
+        $subModelClass = $model->$relationship_name()->getRelated();
         foreach ($data as $related) {
             $id = array_key_exists('id', $related) ? $related['id'] : null;
             if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
-                $subModel = $model->$relationship_name()->getRelated();
-                $subModel = $subModel->newModelQuery()->find($id);
-                if ($subModel) {
-                    $subModel->fill($related)->save();
-                    $model->$relationship_name()->save($subModel);
-                } else {
-                    $subModel = $model->$relationship_name()->create($related);
-                }
+                $subModel = $subModelClass->newModelQuery()->find($id);
+                $subModel->fill($related)->save();
+                $model->$relationship_name()->save($subModel);
             } else {
                 /** @var Model $subModel */
-                $subModel = $model->$relationship_name()->getRelated();
-                $subModel = $subModel->newModelQuery()->find($id);
-                $model->$relationship_name()->save($subModel);
+                $subModel = $model->$relationship_name()->create($related);
             }
 
             if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
