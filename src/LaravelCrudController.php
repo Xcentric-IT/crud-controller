@@ -2,7 +2,6 @@
 
 namespace XcentricItFoundation\LaravelCrudController;
 
-
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +20,11 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Str;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\Create;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\CrudActionPayload;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\Delete;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
+use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 
 class LaravelCrudController extends BaseController
 {
@@ -31,15 +34,9 @@ class LaravelCrudController extends BaseController
 
     public const PER_PAGE = 20;
 
-    protected Request $request;
-
-    /**
-     * Controller constructor.
-     * @param Request $request
-     */
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
+    public function __construct(
+        protected Request $request
+    ) {
     }
 
     public function getRequestValidator(): LaravelCrudRequest
@@ -68,102 +65,55 @@ class LaravelCrudController extends BaseController
     public function readMore(): JsonResource
     {
         return $this->createResourceCollection(
-            $this->parseRequest($this->request, $this->getModelName())
+            $this
+                ->parseRequest($this->request, $this->getModelName())
                 ->paginate($this->perPage())
         );
     }
 
-    /**
-     * @return JsonResource
-     */
     public function create(): JsonResource
     {
-        $data = $this->request->all();
-        $this->getRequestValidator()->validate();
+        $data = $this->validateAndPrepareData();
+
         $model = $this->createModel();
-        [$data, $relations] = $this->resolveRelationFields($model, $data);
+
         $this->beforeCreate($model);
-        $model->fill($data)->save();
-        $this->fillRelationships($model, $relations);
+
+        $this->getCreateAction()->run(new CrudActionPayload($data, $model));
+
         $this->afterCreate($model);
+        $model->fresh();
 
         return $this->createResource($model);
     }
 
-    /**
-     * @param string $id
-     * @return JsonResource
-     */
     public function update(string $id): JsonResource
     {
-        $data = $this->request->all();
-        $this->getRequestValidator()->validate();
+        $data = $this->validateAndPrepareData();
 
         $model = $this->createNewModelQuery()->find($id);
+
         $this->beforeUpdate($model);
-        [$data, $relations] = $this->resolveRelationFields($model, $data);
-        $model->fill($data)->save();
-        $this->fillRelationships($model, $relations);
+
+        $this->getUpdateAction()->run(new CrudActionPayload($data, $model));
+
         $this->afterUpdate($model);
         return $this->createResource($model);
     }
 
-    /**
-     * @param string $id
-     * @param string $relationField
-     * @param string|null $relationId
-     * @return JsonResource
-     */
-    public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource {
-        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-
-        $this->request->validate([
-            'id' => 'required|string',
-        ],[
-            'id.required'=>$relationField . ' is requred.'
-        ]);
-
-        $model = $this->createNewModelQuery()->find($id);
-        $this->beforeUpdate($model);
-        $this->addRemoveRelationships($model, $relationField, $data);
-        $this->afterUpdate($model);
-        return $this->createResource($model);
-    }
-
-    /**
-     * @param string $id
-     * @param string $relationField
-     * @param string|null $relationId
-     * @return JsonResource
-     */
-    public function removeRelation(string $id, string $relationField, string $relationId = null): JsonResource {
-        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-
-        $model = $this->createNewModelQuery()->find($id);
-        $this->beforeUpdate($model);
-        $this->addRemoveRelationships($model, $relationField, $data, false);
-        $this->afterUpdate($model);
-        return $this->createResource($model);
-    }
-
-    /**
-     * @param string $id
-     * @return JsonResponse
-     * @throws \Exception
-     */
     public function delete(string $id): JsonResponse
     {
         tap($this->createNewModelQuery()->find($id), function (Model $model): void {
             $this->beforeDelete($model);
-            $model->delete();
+
+            $this->getDeleteAction()->run(new CrudActionPayload([], $model));
+
             $this->afterDelete($model);
         });
+
         return $this->returnNoContent();
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function returnNoContent(): JsonResponse
     {
         return response()->json(null, self::HTTP_STATUS_EMPTY);
@@ -179,27 +129,70 @@ class LaravelCrudController extends BaseController
         return resolve($this->getModelName());
     }
 
-    protected function perPage(): int
+    protected function getCreateAction(): ExecutableAction
     {
-        return $this->request->query->has('per_page') ? $this->request->query->getInt('per_page') : self::PER_PAGE;
+        return new Create();
     }
 
-    /**
-     * @param Collection<Model>|Model|LengthAwarePaginator|null $resource
-     * @return BaseResource
-     */
-    protected function createResource($resource): BaseResource
+    protected function getUpdateAction(): ExecutableAction
+    {
+        return new Update();
+    }
+
+    protected function getDeleteAction(): ExecutableAction
+    {
+        return new Delete();
+    }
+
+    protected function perPage(): int
+    {
+        return $this->request->query->has('per_page')
+            ? $this->request->query->getInt('per_page')
+            : self::PER_PAGE;
+    }
+
+    protected function createResource(\Illuminate\Support\Collection|Model|LengthAwarePaginator $resource): BaseResource
     {
         return new BaseResource($resource);
     }
 
-    /**
-     * @param Collection|LengthAwarePaginator|null $resource
-     * @return AnonymousResourceCollection
-     */
-    protected function createResourceCollection($resource): AnonymousResourceCollection
-    {
+    protected function createResourceCollection(
+        Collection|LengthAwarePaginator|null $resource
+    ): AnonymousResourceCollection {
         return BaseResource::collection($resource);
+    }
+
+    protected function validateAndPrepareData(): array
+    {
+        return $this->getRequestValidator()->validated();
+    }
+
+    public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource
+    {
+        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
+
+        $this->request->validate([
+            'id' => 'required|string',
+        ],[
+            'id.required'=>$relationField . ' is requred.'
+        ]);
+
+        $model = $this->createNewModelQuery()->find($id);
+        $this->beforeUpdate($model);
+        $this->addRemoveRelationships($model, $relationField, $data);
+        $this->afterUpdate($model);
+        return $this->createResource($model);
+    }
+
+    public function removeRelation(string $id, string $relationField, string $relationId = null): JsonResource
+    {
+        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
+
+        $model = $this->createNewModelQuery()->find($id);
+        $this->beforeUpdate($model);
+        $this->addRemoveRelationships($model, $relationField, $data, false);
+        $this->afterUpdate($model);
+        return $this->createResource($model);
     }
 
     private function resolveRelationFields(Model $model, array $data)
@@ -262,16 +255,11 @@ class LaravelCrudController extends BaseController
         }
     }
 
-    /**
-     * @param Model $model
-     * @param $relationship_name
-     * @param array $data
-     */
     private function syncBelongsToManyRelationship(Model $model, $relationship_name, array $data)
     {
         $present_ids = [];
         foreach ($data as $related) {
-            $id = array_key_exists('id', $related) ? $related['id'] : null;
+            $id = $related['id'] ?? null;
             $relation = $model->$relationship_name();
             $present_ids[$id] = $this->getPivotColumnData($relation, $related['pivot'] ?? []);
 
@@ -286,15 +274,10 @@ class LaravelCrudController extends BaseController
         $model->$relationship_name()->sync($present_ids);
     }
 
-    /**
-     * @param Model $model
-     * @param $relationship_name
-     * @param array $data
-     */
     private function appendDetachBelongsToManyRelationship(Model $model, $relationship_name, array $data, bool $append = true)
     {
         $present_ids = [];
-        $id = array_key_exists('id', $data) ? $data['id'] : null;
+        $id = $data['id'] ?? null;
         $relation = $model->$relationship_name();
         $present_ids[$id] = $append ? $this->getPivotColumnData($relation, $data['pivot'] ?? []) : $id;
 
@@ -312,17 +295,12 @@ class LaravelCrudController extends BaseController
         }
     }
 
-    /**
-     * @param Model $model
-     * @param $relationship_name
-     * @param array $data
-     */
     private function syncHasManyRelationship(Model $model, $relationship_name, array $data)
     {
         $unSyncedSubModels = $model->$relationship_name()->pluck('id')->all();
         $subModelClass = $model->$relationship_name()->getRelated();
         foreach ($data as $related) {
-            $id = array_key_exists('id', $related) ? $related['id'] : null;
+            $id = $related['id'] ?? null;
             if (isset($related['DIRTY'])) {
                 /** @var Model $subModel */
                 $subModel = $subModelClass->newModelQuery()->find($id);
@@ -342,37 +320,5 @@ class LaravelCrudController extends BaseController
             $record = $model->$relationship_name()->where('id', '=', $unSyncedSubModel)->first();
             $record->delete();
         }
-    }
-
-    /**
-     * @param Model  $model
-     * @param string $relationship_name
-     * @param array  $data
-     * @return mixed
-     */
-    private function syncBelongsToRelationship(Model $model, $relationship_name, array $data)
-    {
-        $present_id = array_key_exists('id', $data) ? $data['id'] : null;
-        return $model->$relationship_name()->associate($present_id);
-    }
-
-    /**
-     * @param BelongsToMany $relation
-     * @param array $data
-     * @return array
-     */
-    private function getPivotColumnData(BelongsToMany $relation, array $data): array
-    {
-        $pivotData = [];
-        foreach ($data as $key => $value) {
-            if (
-                in_array($key, $relation->getPivotColumns())
-                && $key !== $relation->getParent()->getCreatedAtColumn()
-                && $key !== $relation->getParent()->getUpdatedAtColumn()
-            ) {
-                $pivotData[$key] = $value;
-            }
-        }
-        return $pivotData;
     }
 }

@@ -60,24 +60,19 @@ trait CrudActionTrait
         }
     }
 
-    /**
-     * @param Model $model
-     * @param string $relationshipName
-     * @param array $data
-     */
     protected function syncBelongsToManyRelationship(Model $model, string $relationshipName, array $data): void
     {
         $presentIds = [];
         foreach ($data as $related) {
             $id = $related['id'] ?? null;
             $relation = $model->$relationshipName();
-            $pivotData = $this->cleanUpPivotData($relation, $related['pivot'] ?? []);
+            $pivotData = $this->getPivotColumnData($relation, $related['pivot'] ?? []);
 
             /** @var Model $subModel */
             $subModel = $relation->getRelated();
             $subModel = $subModel->newModelQuery()->find($id) ?? $subModel;
 
-            if (isset($related['dirty'])) {
+            if (isset($related['DIRTY'])) {
                 /* @phpstan-ignore-next-line */
                 $subModel->fill($related)->save();
             }
@@ -89,11 +84,6 @@ trait CrudActionTrait
         $model->$relationshipName()->sync($presentIds);
     }
 
-    /**
-     * @param Model $model
-     * @param string $relationshipName
-     * @param array $data
-     */
     protected function syncHasManyRelationship(Model $model, string $relationshipName, array $data): void
     {
         foreach ($data as $related) {
@@ -101,7 +91,7 @@ trait CrudActionTrait
             /** @var Model $subModel */
             $subModel = $model->$relationshipName()->getRelated();
             $subModel = $subModel->newModelQuery()->find($id);
-            if (isset($related['dirty'])) {
+            if (isset($related['DIRTY'])) {
                 if ($subModel) {
                     /* @phpstan-ignore-next-line */
                     $subModel->fill($related)->save();
@@ -115,23 +105,12 @@ trait CrudActionTrait
         }
     }
 
-    /**
-     * @param Model $model
-     * @param string $relationshipName
-     * @param array $data
-     * @return Model
-     */
     protected function syncBelongsToRelationship(Model $model, string $relationshipName, array $data): Model
     {
         return $model->$relationshipName()->associate($data['id'] ?? null);
     }
 
-    /**
-     * @param BelongsToMany $relation
-     * @param array $data
-     * @return array
-     */
-    protected function cleanUpPivotData(BelongsToMany $relation, array $data): array
+    protected function getPivotColumnData(BelongsToMany $relation, array $data): array
     {
         $pivotData = [];
         foreach ($data as $key => $value) {
