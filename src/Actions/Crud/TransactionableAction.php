@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace XcentricItFoundation\LaravelCrudController\Actions\Crud;
 
-use App\Actions\ActionPayloadInterface;
-use App\Actions\ActionResponse;
-use App\Actions\ExecutableAction;
-use App\Actions\ExecutableActionResponseContract;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
+use XcentricItFoundation\LaravelCrudController\Actions\ActionResponse;
+use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
+use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 
 abstract class TransactionableAction implements ExecutableAction
 {
-    /**
-     * @param ActionPayloadInterface $actionPayload
-     * @return ExecutableActionResponseContract
-     */
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         DB::beginTransaction();
@@ -31,9 +27,5 @@ abstract class TransactionableAction implements ExecutableAction
         return new ActionResponse($result);
     }
 
-    /**
-     * @param ActionPayloadInterface $actionPayload
-     * @return bool
-     */
     abstract protected function doRun(ActionPayloadInterface $actionPayload): bool;
 }
