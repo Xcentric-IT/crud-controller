@@ -35,11 +35,6 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'laravel-crud-controller');
-
-        // Register the main class to use with the facade
-        $this->app->singleton('laravel-crud-controller', function () {
-            return new LaravelCrudController;
-        });
         
         $this->app->register(LaravelCrudRouteServiceProvider::class);
     }
