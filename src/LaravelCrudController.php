@@ -24,31 +24,33 @@ use XcentricItFoundation\LaravelCrudController\Actions\Crud\RemoveRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\EntityRelationsService;
+use XcentricItFoundation\LaravelCrudController\Services\QueryParserService;
 
 class LaravelCrudController extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, ParsesQuery, CrudCallbacks;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, CrudCallbacks;
 
     public const HTTP_STATUS_EMPTY = 204;
 
     public const PER_PAGE = 20;
 
     public function __construct(
-        protected Request $request
+        protected Request $request,
+        protected QueryParserService $queryParserService
     ) {
     }
 
     public function readOne(string $id): JsonResource
     {
         return $this->createResource(
-            $this->parseRequest($this->request, $this->getModel())->find($id)
+            $this->queryParserService->parseRequest($this->request, $this->getModel())->find($id)
         );
     }
 
     public function readMore(): JsonResource
     {
         return $this->createResourceCollection(
-            $this
+            $this->queryParserService
                 ->parseRequest($this->request, $this->getModel())
                 ->paginate($this->perPage())
         );
