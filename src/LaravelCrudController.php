@@ -153,11 +153,11 @@ class LaravelCrudController extends BaseController
     {
         $requestClass = ModelHelper::getRequestValidatorFqn($this->request->route()->getAction('model'), $this->request->route()->getAction('namespace'));
 
-        if (class_exists($requestClass)) {
-            return resolve($requestClass);
+        if (!class_exists($requestClass)) {
+            $requestClass = LaravelCrudRequest::class;
         }
 
-        return resolve(LaravelCrudRequest::class);
+        return resolve($requestClass);
     }
 
     protected function getModel(): string
@@ -177,27 +177,27 @@ class LaravelCrudController extends BaseController
 
     protected function getCreateAction(): ExecutableAction
     {
-        return new Create(new EntityRelationsService());
+        return resolve(Create::class);
     }
 
     protected function getUpdateAction(): ExecutableAction
     {
-        return new Update(new EntityRelationsService());
+        return resolve(Update::class);
     }
 
     protected function getDeleteAction(): ExecutableAction
     {
-        return new Delete(new EntityRelationsService());
+        return resolve(Delete::class);
     }
 
     protected function getAddRelationAction(): ExecutableAction
     {
-        return new AddRelation(new EntityRelationsService());
+        return resolve(AddRelation::class);
     }
 
     protected function getRemoveRelationAction(): ExecutableAction
     {
-        return new RemoveRelation(new EntityRelationsService());
+        return resolve(RemoveRelation::class);
     }
 
     protected function perPage(): int
