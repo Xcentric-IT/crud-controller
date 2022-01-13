@@ -9,10 +9,8 @@ use XcentricItFoundation\LaravelCrudController\Actions\ActionResponse;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 
-class Delete implements ExecutableAction
+class Delete extends CrudAction implements ExecutableAction
 {
-    use CrudActionTrait;
-
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         return new ActionResponse($actionPayload->model->delete());

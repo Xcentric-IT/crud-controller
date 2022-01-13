@@ -9,18 +9,17 @@ use XcentricItFoundation\LaravelCrudController\Actions\ActionResponse;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 
-class Create implements ExecutableAction
+class Create extends CrudAction implements ExecutableAction
 {
-    use CrudActionTrait;
 
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         $data = $actionPayload->data;
         $model = $actionPayload->model;
 
-        [$data, $relations] = $this->resolveRelationFields($actionPayload->model, $data);
+        [$data, $relations] = $this->entityRelationService->resolveRelationFields($actionPayload->model, $data);
         $model->fill($data)->save();
-        $this->fillRelationships($model, $relations);
+        $this->entityRelationService->fillRelationships($model, $relations);
 
         return new ActionResponse(true);
     }

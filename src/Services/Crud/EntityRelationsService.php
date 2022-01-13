@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace XcentricItFoundation\LaravelCrudController\Actions\Crud;
+namespace XcentricItFoundation\LaravelCrudController\Services\Crud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-trait CrudActionTrait
+class EntityRelationsService
 {
-    protected function resolveRelationFields(Model $model, array $data): array
+    public function resolveRelationFields(Model $model, array $data): array
     {
         $parsedData = [];
         $parsedRelationData = [];
@@ -34,7 +34,7 @@ trait CrudActionTrait
         return [$parsedData, $parsedRelationData];
     }
 
-    protected function fillRelationships(Model $model, array $data): void
+    public function fillRelationships(Model $model, array $data): void
     {
         foreach ($data as $key => $item) {
             $key_camel = Str::camel($key);
@@ -59,7 +59,7 @@ trait CrudActionTrait
         }
     }
 
-    protected function syncBelongsToManyRelationship(Model $model, string $relationshipName, array $data): void
+    public function syncBelongsToManyRelationship(Model $model, string $relationshipName, array $data): void
     {
         $presentIds = [];
         foreach ($data as $related) {
@@ -83,7 +83,7 @@ trait CrudActionTrait
         $model->$relationshipName()->sync($presentIds);
     }
 
-    protected function syncHasManyRelationship(Model $model, $relationship_name, array $data)
+    public function syncHasManyRelationship(Model $model, $relationship_name, array $data)
     {
         $unSyncedSubModels = $model->$relationship_name()->pluck('id')->all();
         $subModelClass = $model->$relationship_name()->getRelated();
@@ -110,7 +110,7 @@ trait CrudActionTrait
         }
     }
 
-    protected function syncBelongsToRelationship(Model $model, string $relationshipName, array $data): Model
+    public function syncBelongsToRelationship(Model $model, string $relationshipName, array $data): Model
     {
         return $model->$relationshipName()->associate($data['id'] ?? null);
     }
