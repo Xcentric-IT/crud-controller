@@ -22,8 +22,9 @@ class CrudActionPayload implements ActionPayloadInterface
         return $this->data;
     }
 
-    public function setData(array $data): void
+    public function setData(array $data): CrudActionPayload
     {
         $this->data = $data;
+        return $this;
     }
 }
