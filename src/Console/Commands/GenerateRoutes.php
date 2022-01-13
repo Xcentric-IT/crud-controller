@@ -226,7 +226,7 @@ class GenerateRoutes extends Command
     
     private function resolveModelController(string $modelName): string
     {
-        $controllerClass = ModelHelper::getControllerNamespace($modelName, $this->moduleNamespace);
+        $controllerClass = ModelHelper::getControllerFqn($modelName, $this->moduleNamespace);
         if (class_exists($controllerClass) && $this->controllerIsValid($controllerClass)) {
             return $controllerClass;
         }

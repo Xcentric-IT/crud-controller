@@ -9,7 +9,19 @@ use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 
 class CrudActionPayload implements ActionPayloadInterface
 {
-    public function __construct(public array $data, public Model $model)
+    protected array $data = [];
+
+    public function __construct(public array $modelData, public Model $model)
     {
+    }
+
+    public function getData(): array
+    {
+        return $this->data;
+    }
+
+    public function setData(array $data): void
+    {
+        $this->data = $data;
     }
 }

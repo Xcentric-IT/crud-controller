@@ -8,16 +8,14 @@ use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\Actions\ActionResponse;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 
-class Create extends CrudAction
+class RemoveRelation extends AddRelation
 {
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         $data = $actionPayload->modelData;
         $model = $actionPayload->model;
 
-        [$data, $relations] = $this->entityRelationService->resolveRelationFields($actionPayload->model, $data);
-        $model->fill($data)->save();
-        $this->entityRelationService->fillRelationships($model, $relations);
+        $this->addRemoveRelationships($model, $data, false);
 
         return new ActionResponse(true);
     }

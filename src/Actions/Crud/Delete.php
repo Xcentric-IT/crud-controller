@@ -6,10 +6,9 @@ namespace XcentricItFoundation\LaravelCrudController\Actions\Crud;
 
 use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\Actions\ActionResponse;
-use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 
-class Delete extends CrudAction implements ExecutableAction
+class Delete extends CrudAction
 {
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
