@@ -34,8 +34,7 @@ class LaravelCrudController extends BaseController
     public const PER_PAGE = 20;
 
     public function __construct(
-        protected Request $request,
-        protected EntityRelationsService $entityRelationsService
+        protected Request $request
     ) {
     }
 
@@ -131,17 +130,17 @@ class LaravelCrudController extends BaseController
 
     protected function getCreateAction(): ExecutableAction
     {
-        return new Create($this->entityRelationsService);
+        return new Create(new EntityRelationsService());
     }
 
     protected function getUpdateAction(): ExecutableAction
     {
-        return new Update($this->entityRelationsService);
+        return new Update(new EntityRelationsService());
     }
 
     protected function getDeleteAction(): ExecutableAction
     {
-        return new Delete($this->entityRelationsService);
+        return new Delete(new EntityRelationsService());
     }
 
     protected function perPage(): int
