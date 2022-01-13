@@ -23,6 +23,7 @@ use XcentricItFoundation\LaravelCrudController\Actions\Crud\CrudActionPayload;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Delete;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
+use XcentricItFoundation\LaravelCrudController\Services\Crud\EntityRelationsService;
 
 class LaravelCrudController extends BaseController
 {
@@ -33,7 +34,8 @@ class LaravelCrudController extends BaseController
     public const PER_PAGE = 20;
 
     public function __construct(
-        protected Request $request
+        protected Request $request,
+        protected EntityRelationsService $entityRelationsService
     ) {
     }
 
@@ -129,17 +131,17 @@ class LaravelCrudController extends BaseController
 
     protected function getCreateAction(): ExecutableAction
     {
-        return new Create();
+        return new Create($this->entityRelationsService);
     }
 
     protected function getUpdateAction(): ExecutableAction
     {
-        return new Update();
+        return new Update($this->entityRelationsService);
     }
 
     protected function getDeleteAction(): ExecutableAction
     {
-        return new Delete();
+        return new Delete($this->entityRelationsService);
     }
 
     protected function perPage(): int
