@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace XcentricItFoundation\LaravelCrudController;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -69,7 +71,7 @@ class LaravelCrudController extends BaseController
 
     public function create(): JsonResource
     {
-        $data = $this->validateAndPrepareData();
+        $data = $this->requestData();
 
         $model = $this->createModel();
 
@@ -85,7 +87,7 @@ class LaravelCrudController extends BaseController
 
     public function update(string $id): JsonResource
     {
-        $data = $this->validateAndPrepareData();
+        $data = $this->requestData();
 
         $model = $this->createNewModelQuery()->find($id);
 
@@ -158,9 +160,9 @@ class LaravelCrudController extends BaseController
         return BaseResource::collection($resource);
     }
 
-    protected function validateAndPrepareData(): array
+    protected function requestData(): array
     {
-        return $this->getRequestValidator()->validated();
+        return $this->request->all();
     }
 
     public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource
