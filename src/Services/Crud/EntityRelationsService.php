@@ -23,7 +23,7 @@ class EntityRelationsService
             if ($model->isRelation($key_camel)) {
                 $isFillable = !$model->isFillable($key) && $model->isFillable($key . '_id');
                 if ($isFillable) {
-                    $parsedData[$key . '_id'] = (!empty($item)  && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;;
+                    $parsedData[$key . '_id'] = (!empty($item) && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;
                 } else {
                     $parsedRelationData[$key] = $item;
                 }
@@ -110,9 +110,69 @@ class EntityRelationsService
         }
     }
 
+//    protected function syncHasManyRelationship(Model $model, string $relationshipName, array $data): void
+//    {
+//        foreach ($data as $related) {
+//            $id = $related['id'] ?? null;
+//            /** @var Model $subModel */
+//            $subModel = $model->$relationshipName()->getRelated();
+//            $subModel = $subModel->newModelQuery()->find($id);
+//            if (isset($related['DIRTY'])) {
+//                if ($subModel) {
+//                    /* @phpstan-ignore-next-line */
+//                    $subModel->fill($related)->save();
+//                    $model->$relationshipName()->save($subModel);
+//                } else {
+//                    $model->$relationshipName()->create($related);
+//                }
+//            } elseif ($id) {
+//                $model->$relationshipName()->save($subModel);
+//            }
+//        }
+//    }
+
     public function syncBelongsToRelationship(Model $model, string $relationshipName, array $data): Model
     {
         return $model->$relationshipName()->associate($data['id'] ?? null);
+    }
+
+    public function addRemoveRelationships(Model $model, array $item, array $additionalData): void
+    {
+        $relationField = $additionalData['relationField'];
+        $add = $additionalData['add'] ?? true;
+
+        $key_camel = Str::camel($relationField);
+        if ($model->isRelation($key_camel)) {
+            $relationship_type = get_class($model->$key_camel());
+            switch ($relationship_type) {
+                case BelongsToMany::class:
+                    $this->appendDetachBelongsToManyRelationship($model, $key_camel, $item, $add);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    protected function appendDetachBelongsToManyRelationship(Model $model, $relationship_name, array $data, bool $append = true): void
+    {
+        $present_ids = [];
+        $id = $data['id'] ?? null;
+        $relation = $model->$relationship_name();
+        $present_ids[$id] = $append ? $this->getPivotColumnData($relation, $data['pivot'] ?? []) : $id;
+
+        if (isset($data['DIRTY'])) {
+            /** @var Model $subModel */
+            $subModel = $relation->getRelated();
+            $subModel = $subModel->newModelQuery()->find($data['id']) ?? $subModel;
+            $subModel->fill($data)->save();
+        }
+
+        if ($append) {
+            $model->$relationship_name()->syncWithoutDetaching($present_ids);
+        } else {
+            $model->$relationship_name()->detach($present_ids);
+        }
     }
 
     protected function getPivotColumnData(BelongsToMany $relation, array $data): array

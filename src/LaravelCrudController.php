@@ -100,7 +100,6 @@ class LaravelCrudController extends BaseController
     public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-        $data['relationField'] = $relationField;
 
         $this->request->validate([
             'id' => 'required|string',
@@ -111,7 +110,14 @@ class LaravelCrudController extends BaseController
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
 
-        $this->getAddRelationAction()->run(new CrudActionPayload($data, $model));
+        $actionPayloadData = [
+            'relationField' => $relationField,
+        ];
+
+        $actionPayload = new CrudActionPayload($data, $model);
+        $actionPayload->setData($actionPayloadData);
+
+        $this->getAddRelationAction()->run($actionPayload);
 
         $this->afterUpdate($model);
         return $this->createResource($model);
@@ -120,12 +126,19 @@ class LaravelCrudController extends BaseController
     public function removeRelation(string $id, string $relationField, string $relationId = null): JsonResource
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-        $data['relationField'] = $relationField;
 
         $model = $this->createNewModelQuery()->find($id);
         $this->beforeUpdate($model);
 
-        $this->getRemoveRelationAction()->run(new CrudActionPayload($data, $model));
+        $actionPayloadData = [
+            'relationField' => $relationField,
+            'add' => false,
+        ];
+
+        $actionPayload = new CrudActionPayload($data, $model);
+        $actionPayload->setData($actionPayloadData);
+
+        $this->getRemoveRelationAction()->run($actionPayload);
 
         $this->afterUpdate($model);
         return $this->createResource($model);
