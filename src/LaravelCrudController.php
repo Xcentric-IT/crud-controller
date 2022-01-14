@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller as BaseController;
+use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\AddRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Create;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\CrudActionPayload;
@@ -23,12 +24,12 @@ use XcentricItFoundation\LaravelCrudController\Actions\Crud\Delete;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\RemoveRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
-use XcentricItFoundation\LaravelCrudController\Services\Crud\EntityRelationsService;
+use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
 use XcentricItFoundation\LaravelCrudController\Services\QueryParserService;
 
 class LaravelCrudController extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, CrudCallbacks;
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public const HTTP_STATUS_EMPTY = 204;
 
@@ -62,12 +63,7 @@ class LaravelCrudController extends BaseController
 
         $model = $this->createModel();
 
-        $this->beforeCreate($model);
-
-        $this->getCreateAction()->run(new CrudActionPayload($data, $model));
-
-        $this->afterCreate($model);
-        $model->fresh();
+        $this->onCreate(new CrudActionPayload($data, $model));
 
         return $this->createResource($model);
     }
@@ -78,23 +74,17 @@ class LaravelCrudController extends BaseController
 
         $model = $this->createNewModelQuery()->find($id);
 
-        $this->beforeUpdate($model);
+        $this->onUpdate(new CrudActionPayload($data, $model));
 
-        $this->getUpdateAction()->run(new CrudActionPayload($data, $model));
-
-        $this->afterUpdate($model);
         return $this->createResource($model);
     }
 
     public function delete(string $id): JsonResponse
     {
-        tap($this->createNewModelQuery()->find($id), function (Model $model): void {
-            $this->beforeDelete($model);
+        $data = [];
+        $model = $this->createNewModelQuery()->find($id);
 
-            $this->getDeleteAction()->run(new CrudActionPayload([], $model));
-
-            $this->afterDelete($model);
-        });
+        $this->onDelete(new CrudActionPayload($data, $model));
 
         return $this->returnNoContent();
     }
@@ -110,18 +100,16 @@ class LaravelCrudController extends BaseController
         ]);
 
         $model = $this->createNewModelQuery()->find($id);
-        $this->beforeUpdate($model);
 
         $actionPayloadData = [
             'relationField' => $relationField,
         ];
 
         $actionPayload = new CrudActionPayload($data, $model);
-        $actionPayload->setData($actionPayloadData);
+        $actionPayload->setAdditionalData($actionPayloadData);
 
-        $this->getAddRelationAction()->run($actionPayload);
+        $this->onAddRelation($actionPayload);
 
-        $this->afterUpdate($model);
         return $this->createResource($model);
     }
 
@@ -130,7 +118,6 @@ class LaravelCrudController extends BaseController
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
 
         $model = $this->createNewModelQuery()->find($id);
-        $this->beforeUpdate($model);
 
         $actionPayloadData = [
             'relationField' => $relationField,
@@ -138,15 +125,39 @@ class LaravelCrudController extends BaseController
         ];
 
         $actionPayload = new CrudActionPayload($data, $model);
-        $actionPayload->setData($actionPayloadData);
+        $actionPayload->setAdditionalData($actionPayloadData);
 
-        $this->getRemoveRelationAction()->run($actionPayload);
+        $this->onRemoveRelation($actionPayload);
 
-        $this->afterUpdate($model);
         return $this->createResource($model);
     }
 
-    public function returnNoContent(): JsonResponse
+    protected function onCreate(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getCreateAction()->run($actionPayload);
+    }
+
+    protected function onUpdate(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getUpdateAction()->run($actionPayload);
+    }
+
+    protected function onDelete(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getDeleteAction()->run($actionPayload);
+    }
+
+    protected function onAddRelation(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getAddRelationAction()->run($actionPayload);
+    }
+
+    protected function onRemoveRelation(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getRemoveRelationAction()->run($actionPayload);
+    }
+
+    protected function returnNoContent(): JsonResponse
     {
         return response()->json(null, self::HTTP_STATUS_EMPTY);
     }

@@ -12,6 +12,6 @@ class Delete extends CrudAction
 {
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
-        return new ActionResponse($actionPayload->model->delete());
+        return new ActionResponse($actionPayload->getModel()->delete());
     }
 }

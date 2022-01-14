@@ -12,11 +12,11 @@ class AddRelation extends CrudAction
 {
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
-        $modelData = $actionPayload->modelData;
-        $model = $actionPayload->model;
         $data = $actionPayload->getData();
+        $model = $actionPayload->getModel();
+        $additionalData = $actionPayload->getAdditionalData();
 
-        $this->entityRelationService->addRemoveRelationships($model, $modelData, $data);
+        $this->entityRelationService->addRemoveRelationships($model, $data, $additionalData);
 
         return new ActionResponse(true);
     }

@@ -12,10 +12,10 @@ class Create extends CrudAction
 {
     public function run(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
-        $data = $actionPayload->modelData;
-        $model = $actionPayload->model;
+        $data = $actionPayload->getData();
+        $model = $actionPayload->getModel();
 
-        [$data, $relations] = $this->entityRelationService->resolveRelationFields($actionPayload->model, $data);
+        [$data, $relations] = $this->entityRelationService->resolveRelationFields($model, $data);
         $model->fill($data)->save();
         $this->entityRelationService->fillRelationships($model, $relations);
 

@@ -9,11 +9,11 @@ use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 
 class CrudActionPayload implements ActionPayloadInterface
 {
-    protected array $data = [];
+    protected array $additionalData = [];
 
     public function __construct(
-        public array $modelData,
-        public Model $model,
+        protected array $data,
+        protected Model $model,
     ) {
     }
 
@@ -22,9 +22,19 @@ class CrudActionPayload implements ActionPayloadInterface
         return $this->data;
     }
 
-    public function setData(array $data): CrudActionPayload
+    public function getModel(): Model
     {
-        $this->data = $data;
+        return $this->model;
+    }
+
+    public function getAdditionalData(): array
+    {
+        return $this->additionalData;
+    }
+
+    public function setAdditionalData(array $additionalData): CrudActionPayload
+    {
+        $this->additionalData = $additionalData;
         return $this;
     }
 }
