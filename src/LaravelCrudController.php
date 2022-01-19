@@ -35,10 +35,13 @@ class LaravelCrudController extends BaseController
 
     public const PER_PAGE = 20;
 
+    protected array $additionalFilters = [];
+
     public function __construct(
         protected Request $request,
         protected QueryParserService $queryParserService
     ) {
+        $this->queryParserService->setAdditionalFilters($this->additionalFilters);
     }
 
     public function readOne(string $id): JsonResource

@@ -71,6 +71,11 @@ class QueryParserService
         return $this;
     }
 
+    public function setAdditionalFilters(array $additionalFilters): void
+    {
+        $this->additionalFilters = $additionalFilters;
+    }
+
     protected function getSortMapping(string $sort): string | AllowedSort
     {
         return Str::contains($sort, '.') ? AllowedSort::custom($sort, new SortByRelationField(), $sort) : $sort;
