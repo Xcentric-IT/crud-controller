@@ -1,6 +1,6 @@
 <?php
 
-namespace XcentricItFoundation\LaravelCrudController;
+namespace XcentricItFoundation\LaravelCrudController\Services;
 
 use Illuminate\Support\Str;
 use Spatie\QueryBuilder\AllowedSort;
@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Spatie\QueryBuilder\QueryBuilder;
 use XcentricItFoundation\LaravelCrudController\Sort\SortByRelationField;
 
-trait ParsesQuery
+class QueryParserService
 {
     protected array $additionalFilters = [];
 
@@ -69,6 +69,11 @@ trait ParsesQuery
         );
 
         return $this;
+    }
+
+    public function setAdditionalFilters(array $additionalFilters): void
+    {
+        $this->additionalFilters = $additionalFilters;
     }
 
     protected function getSortMapping(string $sort): string | AllowedSort
