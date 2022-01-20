@@ -28,6 +28,15 @@
             "XcentricItFoundation\\LaravelCrudController\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "XcentricItFoundation\\LaravelCrudController\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-filter": "vendor/bin/phpunit --filter"
+    },
     "config": {
         "sort-packages": true
     },
