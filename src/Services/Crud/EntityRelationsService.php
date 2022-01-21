@@ -89,9 +89,9 @@ class EntityRelationsService
         $subModelClass = $model->$relationship_name()->getRelated();
         foreach ($data as $related) {
             $id = $related['id'] ?? null;
-            if (isset($related['DIRTY'])) {
-                /** @var Model $subModel */
-                $subModel = $subModelClass->newModelQuery()->find($id);
+            /** @var Model $subModel */
+            $subModel = $subModelClass->newModelQuery()->find($id);
+            if ($subModel instanceof Model) {
                 $subModel->fill($related)->save();
                 $model->$relationship_name()->save($subModel);
             } else {
