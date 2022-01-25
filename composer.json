@@ -44,10 +44,7 @@
         "laravel": {
             "providers": [
                 "XcentricItFoundation\\LaravelCrudController\\LaravelCrudControllerServiceProvider"
-            ],
-            "aliases": {
-                "LaravelCrudController": "XcentricItFoundation\\LaravelCrudController\\LaravelCrudControllerFacade"
-            }
+            ]
         }
     }
 }
