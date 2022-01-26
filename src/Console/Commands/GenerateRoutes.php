@@ -21,12 +21,12 @@ class GenerateRoutes extends Command
      *
      * @var string
      */
-    protected $signature = 'generate:routes {module?}';
+    protected $signature = 'bizhive:generate-routes {module?}';
 
     /**
      * @var string
      */
-    protected $description = 'Generate routes for BizHive Module';
+    protected $description = 'Generate routes for BizHive Modules';
 
     /**
      * @var string
@@ -70,10 +70,12 @@ class GenerateRoutes extends Command
             return CommandAlias::SUCCESS;
         }
         $modules = $this->getAllModules();
+        $this->info('Generating routes...');
         foreach ($modules as $module) {
             $this->generateRoutesForModule($module);
-            $this->newLine();
         }
+        $this->info('Done');
+        $this->newLine();
         return CommandAlias::SUCCESS;
     }
 
@@ -87,7 +89,6 @@ class GenerateRoutes extends Command
             return CommandAlias::FAILURE;
         }
         $this->setModuleNamespace();
-        $this->info('Generating routes for module: ' . $this->module);
         $this->addViewNamespace();
         $this->generateRoutes();
         return CommandAlias::SUCCESS;
@@ -144,7 +145,7 @@ class GenerateRoutes extends Command
             File::delete($filePath);
         }
         File::put($filePath, $view->render());
-        $this->info('Routes file generated:' . $filePath);
+        $this->info('Module: ' . $this->module . ' (path: '.$filePath.')');
     }
 
     /**
@@ -172,10 +173,8 @@ class GenerateRoutes extends Command
     {
         $models = [];
         foreach ($this->getModuleModels()->values() as $modelClass) {
-            $this->line($modelClass);
             $modelName = Str::substr($modelClass, strrpos($modelClass, '\\') + 1);
             $controller = $this->resolveModelController($modelName);
-            $this->line('  - Controller: ' . $controller);
             $models[] = [
                 'class' => $modelClass,
                 'name' => Str::snake($modelName,  '-'),
@@ -191,7 +190,6 @@ class GenerateRoutes extends Command
     private function getModuleModels(): Collection
     {
         $modelsPath = $this->modulePath('Models');
-        $this->line('Scan directory for Laravel Models: ' . $modelsPath);
         return collect(File::allFiles($modelsPath))
             ->map(function ($item) {
                 $path = $item->getRelativePathName();
