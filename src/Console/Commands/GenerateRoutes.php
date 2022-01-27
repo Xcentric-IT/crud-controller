@@ -154,6 +154,9 @@ class GenerateRoutes extends Command
     private function getAllModules(): array
     {
         $modules = ['app'];
+        if (File::exists(app()->basePath('modules')) === false) {
+            return $modules;
+        }
         $modulesDirs = File::directories(app()->basePath('modules'));
         foreach ($modulesDirs as $module) {
             array_push($modules, basename($module));
