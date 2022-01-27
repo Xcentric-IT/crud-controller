@@ -223,7 +223,7 @@ class LaravelCrudController extends BaseController
             : self::PER_PAGE;
     }
 
-    protected function createResource(\Illuminate\Support\Collection|Model|LengthAwarePaginator $resource): BaseResource
+    protected function createResource(\Illuminate\Support\Collection|Model|LengthAwarePaginator|null $resource): BaseResource
     {
         return new BaseResource($resource);
     }
