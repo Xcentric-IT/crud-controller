@@ -47,7 +47,9 @@ class LaravelCrudController extends BaseController
     public function readOne(string $id): JsonResource
     {
         return $this->createResource(
-            $this->queryParserService->parseRequest($this->request, $this->getModel())->find($id)
+            $this->queryParserService
+                ->parseRequest($this->request, $this->getModel())
+                ->find($id)
         );
     }
 
