@@ -8,23 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class SyncHasMany
 {
-    public function __invoke(
-        Model $model,
-        string $relationshipName,
-        array $data,
-    ) {
-        $unSyncedSubModels = $model->$relationshipName()->pluck('id')->all();
-        $subModelClass = $model->$relationshipName()->getRelated();
+    public function __invoke(Model $model, string $relationName, array $data): void
+    {
+        $unSyncedSubModels = $model->$relationName()->pluck('id')->all();
+        $subModelClass = $model->$relationName()->getRelated();
         foreach ($data as $related) {
             $id = $related['id'] ?? null;
             /** @var Model $subModel */
             $subModel = $subModelClass->newModelQuery()->find($id);
             if ($subModel instanceof Model) {
                 $subModel->fill($related)->save();
-                $model->$relationshipName()->save($subModel);
+                $model->$relationName()->save($subModel);
             } else {
                 /** @var Model $subModel */
-                $subModel = $model->$relationshipName()->create($related);
+                $subModel = $model->$relationName()->create($related);
             }
 
             if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
@@ -33,28 +30,28 @@ class SyncHasMany
         }
 
         foreach ($unSyncedSubModels as $unSyncedSubModel) {
-            $record = $model->$relationshipName()->where('id', '=', $unSyncedSubModel)->first();
+            $record = $model->$relationName()->where('id', '=', $unSyncedSubModel)->first();
             $record->delete();
         }
     }
 
-//    protected function syncHasManyRelationship(Model $model, string $relationshipName, array $data): void
+//    protected function syncHasManyRelationship(Model $model, string $relationName, array $data): void
 //    {
 //        foreach ($data as $related) {
 //            $id = $related['id'] ?? null;
 //            /** @var Model $subModel */
-//            $subModel = $model->$relationshipName()->getRelated();
+//            $subModel = $model->$relationName()->getRelated();
 //            $subModel = $subModel->newModelQuery()->find($id);
 //            if (isset($related['DIRTY'])) {
 //                if ($subModel) {
 //                    /* @phpstan-ignore-next-line */
 //                    $subModel->fill($related)->save();
-//                    $model->$relationshipName()->save($subModel);
+//                    $model->$relationName()->save($subModel);
 //                } else {
-//                    $model->$relationshipName()->create($related);
+//                    $model->$relationName()->create($related);
 //                }
 //            } elseif ($id) {
-//                $model->$relationshipName()->save($subModel);
+//                $model->$relationName()->save($subModel);
 //            }
 //        }
 //    }

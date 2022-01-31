@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DetachBelongsToMany
 {
-    public function __invoke(Model $model, string $relationName, array $data)
+    public function __invoke(Model $model, string $relationName, array $data): void
     {
         if (!isset($data['id'])) {
             return;

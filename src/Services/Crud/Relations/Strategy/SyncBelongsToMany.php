@@ -14,11 +14,8 @@ class SyncBelongsToMany
     ) {
     }
 
-    public function __invoke(
-        Model $model,
-        string $relationName,
-        array $data,
-    ) {
+    public function __invoke(Model $model, string $relationName, array $data): void
+    {
         $relation = $model->$relationName();
 
         $syncIds = [];
@@ -29,12 +26,10 @@ class SyncBelongsToMany
 
             /** @var Model $subModel */
             $subModel = $relation->getRelated();
-            $subModel = $subModel->newModelQuery()->find($id) ?? $subModel;
+            $subModel = $subModel->newModelQuery()->findOrNew($id);
 
-            if (isset($related['DIRTY'])) {
-                /* @phpstan-ignore-next-line */
-                $subModel->fill($related)->save();
-            }
+            /* @phpstan-ignore-next-line */
+            $subModel->fill($related)->save();
 
             /* @phpstan-ignore-next-line */
             $syncIds[$subModel->getKey()] = $pivotData;

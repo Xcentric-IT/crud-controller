@@ -8,11 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SyncBelongsTo
 {
-    public function __invoke(
-        Model $model,
-        string $relationshipName,
-        array $data,
-    ) {
+    public function __invoke(Model $model, string $relationshipName, array $data): void
+    {
         $model->$relationshipName()->associate($data['id'] ?? null);
     }
 }

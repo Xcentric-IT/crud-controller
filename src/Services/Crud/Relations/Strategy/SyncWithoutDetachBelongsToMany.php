@@ -14,26 +14,29 @@ class SyncWithoutDetachBelongsToMany
     ) {
     }
 
-    public function __invoke(Model $model, string $relationName, array $data)
+    public function __invoke(Model $model, string $relationName, array $data): void
     {
         if (!isset($data['id'])) {
             return;
         }
 
-        $syncIds = [];
-
         $id = $data['id'];
         $relation = $model->$relationName();
-        $syncIds[$id] = $this->pivotDataService->cleanup($relation, $data['pivot'] ?? []);
 
         /** @var Model $subModel */
         $subModel = $relation->getRelated();
-        $subModel = $subModel->newModelQuery()->find($id) ?? $subModel;
+        $subModel = $subModel->newModelQuery()->find($id);
 
-        if (isset($data['DIRTY'])) {
-            $subModel->fill($data)->save();
+        if ($subModel === null) {
+            return;
         }
 
-        $relation->syncWithoutDetaching($syncIds);
+        $subModel->fill($data)->save();
+
+        $pivotData = $this->pivotDataService->cleanup($relation, $data['pivot'] ?? []);
+
+        $relation->syncWithoutDetaching([
+            $subModel->getKey() => $pivotData,
+        ]);
     }
 }
