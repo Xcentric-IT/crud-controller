@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
+use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Contract\SyncStrategyContract;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\PivotDataService;
 
-class SyncBelongsToMany
+class SyncBelongsToMany implements SyncStrategyContract
 {
     public function __construct(
         protected PivotDataService $pivotDataService,

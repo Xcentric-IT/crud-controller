@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
+use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Contract\SyncStrategyContract;
 
-class SyncBelongsTo
+class SyncBelongsTo implements SyncStrategyContract
 {
-    public function __invoke(Model $model, string $relationshipName, array $data): void
+    public function __invoke(Model $model, string $relationName, array $data): void
     {
-        $model->$relationshipName()->associate($data['id'] ?? null);
+        $model->$relationName()->associate($data['id'] ?? null);
     }
 }
