@@ -94,16 +94,13 @@ class LaravelCrudController extends BaseController
         return $this->returnNoContent();
     }
 
-    public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource
+    public function addRelation(string $id, string $relationField): JsonResource
     {
-        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-
         $this->request->validate([
             'id' => 'required|string',
-        ],[
-            'id.required'=>$relationField . ' is requred.'
         ]);
 
+        $data = $this->request->all();
         $model = $this->createNewModelQuery()->find($id);
 
         $actionPayloadData = [
@@ -225,8 +222,9 @@ class LaravelCrudController extends BaseController
             : self::PER_PAGE;
     }
 
-    protected function createResource(\Illuminate\Support\Collection|Model|LengthAwarePaginator|null $resource): BaseResource
-    {
+    protected function createResource(
+        Collection|Model|LengthAwarePaginator|null $resource
+    ): BaseResource {
         return new BaseResource($resource);
     }
 
@@ -238,8 +236,8 @@ class LaravelCrudController extends BaseController
 
     protected function requestData(): array
     {
-        $data = $this->request->all();
         $this->getRequestValidator()->validate();
-        return $data;
+
+        return $this->request->all();
     }
 }
