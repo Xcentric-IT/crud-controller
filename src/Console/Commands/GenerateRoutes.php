@@ -177,7 +177,9 @@ class GenerateRoutes extends Command
             $controller = $this->resolveModelController($modelName);
             $models[] = [
                 'class' => $modelClass,
-                'name' => Str::snake($modelName,  '-'),
+                'name' => $modelName,
+                'humanName' => str_replace('-', ' ', Str::snake($modelName,  '-')),
+                'slug' => Str::snake($modelName,  '-'),
                 'controller' => $controller
             ];
         }
