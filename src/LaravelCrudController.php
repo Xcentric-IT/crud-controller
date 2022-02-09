@@ -49,7 +49,7 @@ class LaravelCrudController extends BaseController
         return $this->createResource(
             $this->queryParserService
                 ->parseRequest($this->request, $this->getModel())
-                ->find($id)
+                ->findOrFail($id)
         );
     }
 
@@ -77,7 +77,7 @@ class LaravelCrudController extends BaseController
     {
         $data = $this->requestData();
 
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $this->onUpdate(new CrudActionPayload($data, $model));
 
@@ -87,7 +87,7 @@ class LaravelCrudController extends BaseController
     public function delete(string $id): JsonResponse
     {
         $data = [];
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $this->onDelete(new CrudActionPayload($data, $model));
 
@@ -101,7 +101,7 @@ class LaravelCrudController extends BaseController
         ]);
 
         $data = $this->request->all();
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $actionPayloadData = [
             'relationField' => $relationField,
@@ -119,7 +119,7 @@ class LaravelCrudController extends BaseController
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
 
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $actionPayloadData = [
             'relationField' => $relationField,
