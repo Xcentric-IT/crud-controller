@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Tests\Feature;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\Entity;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityField;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityInterface;
@@ -230,8 +231,8 @@ class EntityTest extends TestCase
         $deleteResponse = $this->delete($apiUrl);
         $deleteResponse->assertStatus(204);
 
-        $response = $this->get($apiUrl);
-        $response->assertJsonCount(0, 'data');
+        $this->expectException(ModelNotFoundException::class);
+        $entity->refresh();
     }
 
     public function testAddRelation(): void
