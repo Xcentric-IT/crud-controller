@@ -229,10 +229,9 @@ class EntityTest extends TestCase
         $apiUrl = $this->getApiUrl($entity->getKey());
 
         $deleteResponse = $this->delete($apiUrl);
-        $deleteResponse->assertStatus(204);
 
-        $this->expectException(ModelNotFoundException::class);
-        $entity->refresh();
+        $deleteResponse->assertStatus(204);
+        $this->assertModelMissing($entity);
     }
 
     public function testAddRelation(): void
