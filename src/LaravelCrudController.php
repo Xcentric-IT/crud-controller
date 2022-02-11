@@ -47,7 +47,9 @@ class LaravelCrudController extends BaseController
     public function readOne(string $id): JsonResource
     {
         return $this->createResource(
-            $this->queryParserService->parseRequest($this->request, $this->getModel())->find($id)
+            $this->queryParserService
+                ->parseRequest($this->request, $this->getModel())
+                ->findOrFail($id)
         );
     }
 
@@ -75,7 +77,7 @@ class LaravelCrudController extends BaseController
     {
         $data = $this->requestData();
 
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $this->onUpdate(new CrudActionPayload($data, $model));
 
@@ -85,24 +87,21 @@ class LaravelCrudController extends BaseController
     public function delete(string $id): JsonResponse
     {
         $data = [];
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $this->onDelete(new CrudActionPayload($data, $model));
 
         return $this->returnNoContent();
     }
 
-    public function addRelation(string $id, string $relationField, string $relationId = null): JsonResource
+    public function addRelation(string $id, string $relationField): JsonResource
     {
-        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
-
         $this->request->validate([
             'id' => 'required|string',
-        ],[
-            'id.required'=>$relationField . ' is requred.'
         ]);
 
-        $model = $this->createNewModelQuery()->find($id);
+        $data = $this->request->all();
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $actionPayloadData = [
             'relationField' => $relationField,
@@ -120,7 +119,7 @@ class LaravelCrudController extends BaseController
     {
         $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
 
-        $model = $this->createNewModelQuery()->find($id);
+        $model = $this->createNewModelQuery()->findOrFail($id);
 
         $actionPayloadData = [
             'relationField' => $relationField,
@@ -223,8 +222,9 @@ class LaravelCrudController extends BaseController
             : self::PER_PAGE;
     }
 
-    protected function createResource(\Illuminate\Support\Collection|Model|LengthAwarePaginator $resource): BaseResource
-    {
+    protected function createResource(
+        Collection|Model|LengthAwarePaginator|null $resource
+    ): BaseResource {
         return new BaseResource($resource);
     }
 
@@ -236,8 +236,8 @@ class LaravelCrudController extends BaseController
 
     protected function requestData(): array
     {
-        $data = $this->request->all();
         $this->getRequestValidator()->validate();
-        return $data;
+
+        return $this->request->all();
     }
 }

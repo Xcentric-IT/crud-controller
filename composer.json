@@ -1,11 +1,11 @@
 {
-    "name": "xcentric-it-foundation/laravel-crud-controller",
+    "name": "xcentric-it/laravel-crud-controller",
     "description": "",
     "keywords": [
-        "xcentric-it-foundation",
+        "xcentric-it",
         "laravel-crud-controller"
     ],
-    "homepage": "https://gitlab.com/xcentric-it-foundation/laravel-crud-controller",
+    "homepage": "https://gitlab.com/xcentric-it/bizhive/laravel-crud-controller",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -17,11 +17,11 @@
     ],
     "require": {
         "php": "^8.0",
-        "illuminate/support": "^8.0",
-        "spatie/laravel-query-builder": "^3.3"
+        "illuminate/support": "^8.0|^9.0",
+        "spatie/laravel-query-builder": "^3.4"
     },
     "require-dev": {
-        "orchestra/testbench": "^6.0"
+        "orchestra/testbench": "^6.0|^7.0"
     },
     "autoload": {
         "psr-4": {

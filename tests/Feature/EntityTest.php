@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Tests\Feature;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\Entity;
+use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityField;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityInterface;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\Module;
 use XcentricItFoundation\LaravelCrudController\Tests\TestCase;
@@ -77,6 +79,63 @@ class EntityTest extends TestCase
         }
     }
 
+    public function testCreateWithRelations(): void
+    {
+        /** @var Module $module */
+        $module = Module::query()->firstOrFail();
+
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
+
+        /** @var EntityField $entityField */
+        $entityField = EntityField::query()->where('name', '=', 'Field Three')->firstOrFail();
+
+        $requestData = [
+            'name' => 'Test Created Model',
+            'parent_class' => null,
+            'module' => $module->toArray(),
+            'fields' => [
+                $entityField->toArray(),
+                [
+                    'name' => 'Field Four',
+                ],
+                [
+                    'name' => 'Field Five',
+                ],
+            ],
+            'interfaces' => [
+                $entityInterface->toArray(),
+                [
+                    'name' => 'TestInterfaceFour',
+                    'fqn' => 'App\Contracts\TestInterfaceFour',
+                ],
+            ],
+        ];
+
+        $response = $this->post($this->getApiUrl(), $requestData);
+
+        $response->assertStatus(201);
+
+        $data = $requestData;
+        $data['parent_class_id'] = $data['parent_class'] ? $data['parent_class']['id'] : null;
+        $data['module_id'] = $data['module']['id'];
+
+        foreach ($this->fields() as $field) {
+            self::assertEquals($data[$field], $response->json('data.' . $field));
+        }
+
+        /** @var Entity $entity */
+        $entity = Entity::query()->findOrFail($response->json('data.id'));
+        $entityFields = $entity->fields;
+        $entityInterfaces = $entity->interfaces;
+
+        self::assertEquals(3, $entityFields->count());
+        self::assertArrayHasKey($entityField->getKey(), $entityFields->pluck('name', 'id'));
+
+        self::assertEquals(2, $entityInterfaces->count());
+        self::assertArrayHasKey($entityInterface->getKey(), $entityInterfaces->pluck('name', 'id'));
+    }
+
     public function testUpdate(): void
     {
         /** @var Entity $entity */
@@ -101,28 +160,90 @@ class EntityTest extends TestCase
         }
     }
 
+    public function testUpdateWithRelations(): void
+    {
+        /** @var Entity $entity */
+        $entity = Entity::query()->with(['parentClass', 'module', 'fields', 'interfaces'])->firstOrFail();
+
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
+
+        /** @var EntityField $entityField */
+        $entityField = EntityField::query()->where('name', '=', 'Field Three')->firstOrFail();
+
+        $data = $entity->toArray();
+        $data['name'] = 'Test Updated Model';
+        $data['fields'] = [
+            ...$data['fields'],
+            ...[
+                [
+                    'name' => 'Field Four',
+                ],
+                [
+                    'name' => 'Field Five',
+                ],
+            ],
+        ];
+        $data['interfaces'] = [
+            ...$data['interfaces'],
+            ...[
+                $entityInterface->toArray(),
+                [
+                    'name' => 'TestInterfaceFour',
+                    'fqn' => 'App\Contracts\TestInterfaceFour',
+                ],
+            ],
+        ];
+
+        $requestData = $data;
+        unset($requestData['parent_class_id'], $requestData['module_id']);
+
+        $response = $this->put($this->getApiUrl($entity->getKey()), $requestData);
+
+        $response->assertStatus(200);
+
+        $fieldName = 'name';
+        foreach ($this->fields() as $field) {
+            if ($field === $fieldName) {
+                self::assertNotEquals($entity->name, $response->json('data.' . $fieldName));
+            }
+            self::assertEquals($data[$field], $response->json('data.' . $field));
+        }
+
+        $entity->refresh();
+        $entityFields = $entity->fields;
+        $entityInterfaces = $entity->interfaces;
+
+        self::assertEquals(5, $entityFields->count());
+        self::assertArrayHasKey($entityField->getKey(), $entityFields->pluck('name', 'id'));
+
+        self::assertEquals(4, $entityInterfaces->count());
+        self::assertArrayHasKey($entityInterface->getKey(), $entityInterfaces->pluck('name', 'id'));
+    }
+
     public function testDelete(): void
     {
+        /** @var Entity $entity */
         $entity = $this->getModel();
 
         $apiUrl = $this->getApiUrl($entity->getKey());
 
         $deleteResponse = $this->delete($apiUrl);
-        $deleteResponse->assertStatus(204);
 
-        $response = $this->get($apiUrl);
-        $response->assertJsonCount(0, 'data');
+        $deleteResponse->assertStatus(204);
+        $this->assertModelMissing($entity);
     }
 
     public function testAddRelation(): void
     {
+        /** @var Entity $entity */
         $entity = $this->getModel();
 
-        /** @var EntityInterface $interface */
-        $interface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
 
         $data = [
-            'id' => $interface->id,
+            'id' => $entityInterface->id,
         ];
 
         $apiUrl = $this->getApiUrl($entity->getKey() . '/relation/interfaces');
@@ -139,10 +260,10 @@ class EntityTest extends TestCase
         /** @var Entity $entity */
         $entity = $this->getModel();
 
-        /** @var EntityInterface $interface */
-        $interface = EntityInterface::query()->where('name', '=', 'TestInterfaceOne')->firstOrFail();
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceOne')->firstOrFail();
 
-        $apiUrl = $this->getApiUrl($entity->getKey() . '/relation/interfaces/' . $interface->id);
+        $apiUrl = $this->getApiUrl($entity->getKey() . '/relation/interfaces/' . $entityInterface->id);
 
         $response = $this->delete($apiUrl);
         $response->assertStatus(200);
