@@ -83,8 +83,10 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     summary="Get {{$model['humanName']}}.",
      *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Successful operation", @OA\JsonContent(ref="#/components/schemas/{{$namespace}}\{{$model['name']}}")),
-     *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated.")))
+     *     @OA\Response(response=200, description="Successful operation.", @OA\JsonContent(ref="#/components/schemas/{{$namespace}}\{{$model['name']}}")),
+     *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated."))),
+     *     @OA\Response(response=404, description="{{ucfirst($model['humanName'])}} not found."),
+     *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
     $router->get('/{id}', ['uses' => '\{{$model['controller']}}@readOne', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
@@ -96,8 +98,10 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
      *     summary="Create {{$model['humanName']}}.",
      *     requestBody={"$ref": "#/components/requestBodies/{{$namespace}}\{{$model['name']}}"},
-     *     @OA\Response(response=201, description="Null response"),
-     *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated.")))
+     *     @OA\Response(response=201, description="Successful operation.", @OA\JsonContent(ref="#/components/schemas/{{$namespace}}\{{$model['name']}}")),
+     *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated."))),
+     *     @OA\Response(response=422, description="Error: Unprocessable Content."),
+     *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
     $router->post('/', ['uses' => '\{{$model['controller']}}@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
@@ -110,7 +114,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
      *     requestBody={"$ref": "#/components/requestBodies/{{$namespace}}\{{$model['name']}}"},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=400, description="Invalid ID supplied."),
+     *     @OA\Response(response=201, description="Successful operation.", @OA\JsonContent(ref="#/components/schemas/{{$namespace}}\{{$model['name']}}")),
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated.",
@@ -118,7 +122,9 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *             @OA\Property(property="message", type="string", default="Unauthenticated.")
      *         )
      *     ),
-     *     @OA\Response(response=404, description="{{ucfirst($model['humanName'])}} not found.")
+     *     @OA\Response(response=404, description="{{ucfirst($model['humanName'])}} not found."),
+     *     @OA\Response(response=422, description="Error: Unprocessable Content."),
+     *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
     $router->put('/{id}', ['uses' => '\{{$model['controller']}}@update', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
@@ -131,7 +137,6 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
      *     @OA\Response(response=204, description="No content, delete successful."),
-     *     @OA\Response(response=400, description="Invalid ID supplied."),
      *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated."))),
      *     @OA\Response(response=404, description="{{ucfirst($model['humanName'])}} not found."),
      *     @OA\Response(response=500, description="Internal server error.")
