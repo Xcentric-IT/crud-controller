@@ -17,6 +17,11 @@ class RelationFieldCheckerService
         return $model->{$this->getRelationNameByField($field)}();
     }
 
+    public function getRelationClassByField(Model $model, string $field): string
+    {
+        return get_class($this->getRelationByField($model, $field));
+    }
+
     public function getRelationNameByField(string $field): string
     {
         return Str::camel($field);
