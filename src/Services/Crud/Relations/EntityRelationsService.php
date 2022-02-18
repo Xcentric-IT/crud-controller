@@ -50,6 +50,14 @@ class EntityRelationsService
         }
     }
 
+    public function fillRelationshipsRecursively(Model $model, array $data, bool $withNewRelationEntries = false): void
+    {
+        [$modelData, $relations] = $this->resolveRelationFields($model, $data);
+        foreach ($relations as $field => $value) {
+            $this->syncRelationService->applySyncRecursively($model, $field, $value, $withNewRelationEntries);
+        }
+    }
+
     public function addRemoveRelationships(Model $model, array $data, array $params): void
     {
         $relationField = $params['relationField'];
@@ -59,9 +67,8 @@ class EntityRelationsService
             return;
         }
 
-        $relation = $this->relationFieldCheckerService->getRelationByField($model, $relationField);
-
-        if (!in_array(get_class($relation), self::ADD_REMOVE_RELATIONS, true)) {
+        $relationClass = $this->relationFieldCheckerService->getRelationClassByField($model, $relationField);
+        if (!in_array($relationClass, self::ADD_REMOVE_RELATIONS, true)) {
             return;
         }
 
