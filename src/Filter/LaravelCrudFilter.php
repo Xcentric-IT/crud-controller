@@ -13,6 +13,7 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterBeforeDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterExact;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThanOrEqual;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNotNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOrEqual;
@@ -26,6 +27,7 @@ class LaravelCrudFilter
 {
     private $availableFilters = [
         'isNull' => FilterIsNull::class,
+        'isNotNull' => FilterIsNotNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
         'eq' => FilterExact::class,
         'beforeDate' => FilterBeforeDate::class,
