@@ -1,7 +1,10 @@
 <?php
+
 namespace XcentricItFoundation\LaravelCrudController\Attribute;
 
-#[\Attribute]
+use Attribute;
+
+#[Attribute]
 class SkipRouteGenerate
 {
 }

@@ -14,7 +14,15 @@ class EntitySeeder extends Seeder
 
         Entity::query()->create([
             'name' => 'Test Entity',
-            'module_id' => $module->id,
+            'module_id' => $module->getKey(),
+        ]);
+
+        $parentEntity = Entity::query()->firstOrFail();
+
+        Entity::query()->create([
+            'name' => 'Test Child Entity',
+            'module_id' => $module->getKey(),
+            'parent_class_id' => $parentEntity->getKey(),
         ]);
     }
 }

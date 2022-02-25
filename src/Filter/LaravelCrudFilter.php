@@ -2,7 +2,6 @@
 
 namespace XcentricItFoundation\LaravelCrudController\Filter;
 
-
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -25,7 +24,7 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldS
  */
 class LaravelCrudFilter
 {
-    private $availableFilters = [
+    private array $availableFilters = [
         'isNull' => FilterIsNull::class,
         'isNotNull' => FilterIsNotNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
@@ -45,18 +44,13 @@ class LaravelCrudFilter
         $allowedFilters = [];
 
         foreach ($filters as $filterName => $filterValue) {
-            $allowedFilters[] = $this->getFilterMapping($filterName, $additionalFilters, $filterValue);
+            $allowedFilters[] = $this->getFilterMapping($filterName, $additionalFilters);
         }
 
         $queryBuilder->allowedFilters($allowedFilters);
     }
 
-    /**
-     * @param string $filter
-     * @param string|null $value
-     * @return AllowedFilter
-     */
-    protected function getFilterMapping(string $property, $additionalFilters, ?string $value): AllowedFilter
+    protected function getFilterMapping(string $property, array $additionalFilters): AllowedFilter
     {
         $filter = $property;
         if (Str::contains($property, ':')) {

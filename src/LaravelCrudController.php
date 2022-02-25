@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Routing\Route;
 use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\AddRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Create;
@@ -166,7 +167,10 @@ class LaravelCrudController extends BaseController
 
     protected function getRequestValidator(): LaravelCrudRequest
     {
-        $requestClass = ModelHelper::getRequestValidatorFqn($this->request->route()->getAction('model'), $this->request->route()->getAction('namespace'));
+        /** @var Route $route */
+        $route = $this->request->route();
+
+        $requestClass = ModelHelper::getRequestValidatorFqn($route->getAction('model'), $route->getAction('namespace'));
 
         if (!class_exists($requestClass)) {
             $requestClass = LaravelCrudRequest::class;
@@ -177,7 +181,10 @@ class LaravelCrudController extends BaseController
 
     protected function getModel(): string
     {
-        return ModelHelper::getModelFqn($this->request->route()->getAction('model'), $this->request->route()->getAction('namespace'));
+        /** @var Route $route */
+        $route = $this->request->route();
+
+        return ModelHelper::getModelFqn($route->getAction('model'), $route->getAction('namespace'));
     }
 
     protected function createNewModelQuery(): Builder

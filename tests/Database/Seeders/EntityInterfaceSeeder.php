@@ -29,8 +29,8 @@ class EntityInterfaceSeeder extends Seeder
         ]);
 
         $entity->interfaces()->sync([
-            $testInterfaceOne->id,
-            $testInterfaceTwo->id,
+            $testInterfaceOne->getKey(),
+            $testInterfaceTwo->getKey(),
         ]);
     }
 }

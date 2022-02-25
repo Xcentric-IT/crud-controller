@@ -29,10 +29,8 @@ class SyncBelongsToMany implements SyncStrategyContract
             $subModel = $relation->getRelated();
             $subModel = $subModel->newModelQuery()->findOrNew($id);
 
-            /* @phpstan-ignore-next-line */
             $subModel->fill($related)->save();
 
-            /* @phpstan-ignore-next-line */
             $syncIds[$subModel->getKey()] = $pivotData;
         }
 

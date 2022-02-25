@@ -21,6 +21,7 @@
         "spatie/laravel-query-builder": "^3.4"
     },
     "require-dev": {
+        "nunomaduro/larastan": "^1.0|^2.0",
         "orchestra/testbench": "^6.0|^7.0"
     },
     "autoload": {
@@ -34,8 +35,8 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-filter": "vendor/bin/phpunit --filter"
+        "test": "vendor/bin/phpunit tests",
+        "analyse": "vendor/bin/phpstan analyse"
     },
     "config": {
         "sort-packages": true

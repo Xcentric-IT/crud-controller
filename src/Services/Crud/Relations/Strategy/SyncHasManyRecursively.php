@@ -24,7 +24,7 @@ class SyncHasManyRecursively implements SyncStrategyContract
             $item = $this->prepareRelationData($item);
 
             $id = $item['id'] ?? null;
-            /** @var Model $subModel */
+            /** @var Model|null $subModel */
             $subModel = $subModelClass->newModelQuery()->find($id);
 
             [$subModelData, $relations] = $this->entityRelationsService->resolveRelationFields($subModelClass, $item);
@@ -37,7 +37,7 @@ class SyncHasManyRecursively implements SyncStrategyContract
                 $subModel = $model->$relationName()->create($subModelData);
             }
 
-            if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
+            if (($index = array_search($subModel->getKey(), $unSyncedSubModels)) !== false) {
                 unset($unSyncedSubModels[$index]);
             }
 
