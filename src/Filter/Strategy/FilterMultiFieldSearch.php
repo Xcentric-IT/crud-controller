@@ -4,20 +4,18 @@ namespace XcentricItFoundation\LaravelCrudController\Filter\Strategy;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Spatie\QueryBuilder\Filters\Filter;
 use Illuminate\Support\Str;
 use Spatie\QueryBuilder\Filters\FiltersExact;
 
-class FilterMultiFieldSearch extends FiltersExact implements Filter
+class FilterMultiFieldSearch extends FiltersExact
 {
-    public function __invoke(Builder $query, $value, string $property): void
+    public function __invoke(Builder $query, mixed $value, string $property): void
     {
         if (Str::contains($property, ':')) {
             $property = explode(':', $property)[1];
         }
 
-        $query->where(function(Builder $subQuery) use ($value, $property, $query) {
+        $query->where(function(Builder $subQuery) use ($value, $property) {
             $properties = explode(',', $property);
             foreach ($properties as $aProperty) {
                 if ($this->addRelationConstraint) {
@@ -68,7 +66,7 @@ class FilterMultiFieldSearch extends FiltersExact implements Filter
         return $array;
     }
 
-    protected function withRelationConstraint(Builder $query, $value, string $property)
+    protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
     {
         [$relation, $property] = collect(explode('.', $property))
             ->pipe(function (Collection $parts) {

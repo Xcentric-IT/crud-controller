@@ -7,7 +7,7 @@ use Spatie\QueryBuilder\Sorts\Sort;
 
 class SortByRelationField implements Sort
 {
-    public function __invoke(Builder $query, bool $descending, string $property)
+    public function __invoke(Builder $query, bool $descending, string $property): void
     {
         $splits = explode('.', $property);
         $relation = $splits[0];
