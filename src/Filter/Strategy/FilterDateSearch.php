@@ -3,8 +3,9 @@
 namespace XcentricItFoundation\LaravelCrudController\Filter\Strategy;
 
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\QueryBuilder\Filters\Filter;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Spatie\QueryBuilder\Filters\Filter;
 
 class FilterDateSearch implements Filter
 {
@@ -14,6 +15,8 @@ class FilterDateSearch implements Filter
             $property = explode(':', $property)[1];
         }
 
-        $query->where($property, '=', $value);
+        $startOfDay = Carbon::parse($value)->startOfDay();
+        $endOfDay = Carbon::parse($value)->endOfDay();
+        $query->whereBetween($property, [$startOfDay, $endOfDay]);
     }
 }
