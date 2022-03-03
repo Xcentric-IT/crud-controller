@@ -3,6 +3,7 @@
 namespace XcentricItFoundation\LaravelCrudController\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 
 class RelationFieldCheckerService
@@ -12,7 +13,7 @@ class RelationFieldCheckerService
         return $model->isRelation($this->getRelationNameByField($field));
     }
 
-    public function getRelationByField(Model $model, string $field)
+    public function getRelationByField(Model $model, string $field): Relation
     {
         return $model->{$this->getRelationNameByField($field)}();
     }

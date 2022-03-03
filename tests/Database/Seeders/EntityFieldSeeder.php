@@ -15,17 +15,17 @@ class EntityFieldSeeder extends Seeder
 
         $entityFieldOne = EntityField::query()->create([
             'name' => 'Field One',
-            'entity_id' => $entity->id,
+            'entity_id' => $entity->getKey(),
         ]);
 
         $entityFieldTwo = EntityField::query()->create([
             'name' => 'Field Two',
-            'entity_id' => $entity->id,
+            'entity_id' => $entity->getKey(),
         ]);
 
         $entityFieldThree = EntityField::query()->create([
             'name' => 'Field Three',
-            'entity_id' => $entity->id,
+            'entity_id' => $entity->getKey(),
         ]);
 
         $entity->fields()->saveMany([

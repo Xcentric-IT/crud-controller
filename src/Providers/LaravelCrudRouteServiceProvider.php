@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\Route;
 
 class LaravelCrudRouteServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
         $this->routes(function () {
             $this->registerAppRoutes();
             $this->registerModulesRoutes();
         });
     }
+
     /**
      * Register all app routes
      */
@@ -50,8 +51,6 @@ class LaravelCrudRouteServiceProvider extends ServiceProvider
 
     /**
      * Register routes for specific module
-     *
-     * @param string $module
      */
     protected function registerModuleRoutes(string $module): void
     {
@@ -70,14 +69,13 @@ class LaravelCrudRouteServiceProvider extends ServiceProvider
 
     /**
      * Register routes from given file
-     *
-     * @param $filePath
      */
-    protected function registerRoutes($filePath): void
+    protected function registerRoutes(string $filePath): void
     {
         if (File::exists($filePath) === false) {
             return;
         }
+
         Route::prefix(config('laravel-crud-controller.routes-prefix'))
             ->middleware(config('laravel-crud-controller.middlewares'))
             ->group($filePath);

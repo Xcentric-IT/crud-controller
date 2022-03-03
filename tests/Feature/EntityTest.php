@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Tests\Feature;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Str;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\Entity;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityField;
 use XcentricItFoundation\LaravelCrudController\Tests\Models\EntityInterface;
@@ -33,12 +33,17 @@ class EntityTest extends TestCase
         return 'entity' . ($id ? "/$id" : '');
     }
 
+    protected function generateUuid(): string
+    {
+        return (string)Str::uuid();
+    }
+
     public function testReadMore(): void
     {
         $response = $this->get($this->getApiUrl());
 
         $response->assertStatus(200);
-        $response->assertJsonCount(1, 'data');
+        $response->assertJsonCount(2, 'data');
     }
 
     public function testReadOne(): void
@@ -53,6 +58,14 @@ class EntityTest extends TestCase
         foreach ($this->fields() as $field) {
             self::assertEquals($entity->$field, $response->json('data.' . $field));
         }
+    }
+
+    public function testReadOneInvalidId(): void
+    {
+        $apiUrl = $this->getApiUrl($this->generateUuid());
+
+        $response = $this->get($apiUrl);
+        $response->assertStatus(404);
     }
 
     public function testCreate(): void
@@ -160,6 +173,23 @@ class EntityTest extends TestCase
         }
     }
 
+    public function testUpdateInvalidId(): void
+    {
+        $apiUrl = $this->getApiUrl($this->generateUuid());
+
+        /** @var Module $module */
+        $module = Module::query()->firstOrFail();
+
+        $requestData = [
+            'name' => 'Test Model',
+            'parent_class' => null,
+            'module' => $module->toArray(),
+        ];
+
+        $response = $this->put($apiUrl, $requestData);
+        $response->assertStatus(404);
+    }
+
     public function testUpdateWithRelations(): void
     {
         /** @var Entity $entity */
@@ -234,6 +264,14 @@ class EntityTest extends TestCase
         $this->assertModelMissing($entity);
     }
 
+    public function testDeleteInvalidId(): void
+    {
+        $apiUrl = $this->getApiUrl($this->generateUuid());
+
+        $response = $this->delete($apiUrl);
+        $response->assertStatus(404);
+    }
+
     public function testAddRelation(): void
     {
         /** @var Entity $entity */
@@ -243,16 +281,31 @@ class EntityTest extends TestCase
         $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
 
         $data = [
-            'id' => $entityInterface->id,
+            'id' => $entityInterface->getKey(),
         ];
 
-        $apiUrl = $this->getApiUrl($entity->getKey() . '/relation/interfaces');
+        $apiUrl = $this->getApiUrl($entity->getKey()) . '/relation/interfaces';
 
         $response = $this->put($apiUrl, $data);
         $response->assertStatus(200);
 
         $entity->refresh();
         self::assertEquals(3, $entity->interfaces->count());
+    }
+
+    public function testAddRelationInvalidParentId(): void
+    {
+        $apiUrl = $this->getApiUrl($this->generateUuid()) . '/relation/interfaces';
+
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
+
+        $data = [
+            'id' => $entityInterface->getKey(),
+        ];
+
+        $response = $this->put($apiUrl, $data);
+        $response->assertStatus(404);
     }
 
     public function testRemoveRelation(): void
@@ -263,7 +316,7 @@ class EntityTest extends TestCase
         /** @var EntityInterface $entityInterface */
         $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceOne')->firstOrFail();
 
-        $apiUrl = $this->getApiUrl($entity->getKey() . '/relation/interfaces/' . $entityInterface->id);
+        $apiUrl = $this->getApiUrl($entity->getKey()) . '/relation/interfaces/' . $entityInterface->getKey();
 
         $response = $this->delete($apiUrl);
         $response->assertStatus(200);
@@ -272,13 +325,26 @@ class EntityTest extends TestCase
         self::assertEquals(1, $entity->interfaces->count());
     }
 
+    public function testRemoveRelationInvalidParentId(): void
+    {
+        /** @var EntityInterface $entityInterface */
+        $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
+
+        $apiUrl = $this->getApiUrl($this->generateUuid()) . '/relation/interfaces/' . $entityInterface->getKey();
+
+        $response = $this->delete($apiUrl);
+        $response->assertStatus(404);
+    }
+
     public function testFiltering(): void
     {
         /** @var Entity $entity */
         $entity = $this->getModel();
 
+        $apiUrl = $this->getApiUrl();
+
         foreach ($this->fields() as $field) {
-            $response = $this->get($this->getApiUrl() . '?filter[' . $field . ']=' . $entity->$field);
+            $response = $this->get($apiUrl . '?filter[' . $field . ']=' . $entity->$field);
 
             $response->assertStatus(200);
             $response->assertJsonCount(1, 'data');
@@ -287,12 +353,27 @@ class EntityTest extends TestCase
         }
     }
 
-    public function testIncludes(): void
+    public function testOneModelIncludes(): void
     {
         /** @var Entity $entity */
         $entity = $this->getModel();
 
-        $response = $this->get($this->getApiUrl($entity->getKey()) . '?include=interfaces');
+        $response = $this->get($this->getApiUrl($entity->getKey()) . '?include=interfaces,parent_class');
+        $response->assertStatus(200);
+
         $response->assertJsonCount(2, 'data.interfaces');
+        self::assertNull($response->json('data.parent_class'));
+    }
+
+    public function testMoreModelsIncludes(): void
+    {
+        $response = $this->get($this->getApiUrl() . '?include=interfaces,parent_class');
+        $response->assertStatus(200);
+
+        $response->assertJsonCount(2, 'data.0.interfaces');
+        self::assertNull($response->json('data.0.parent_class'));
+
+        $response->assertJsonCount(0, 'data.1.interfaces');
+        self::assertNotNull($response->json('data.1.parent_class'));
     }
 }

@@ -15,7 +15,7 @@ class SyncHasMany implements SyncStrategyContract
         $subModelClass = $model->$relationName()->getRelated();
         foreach ($data as $related) {
             $id = $related['id'] ?? null;
-            /** @var Model $subModel */
+            /** @var Model|null $subModel */
             $subModel = $subModelClass->newModelQuery()->find($id);
             if ($subModel instanceof Model) {
                 $subModel->fill($related)->save();
@@ -25,7 +25,7 @@ class SyncHasMany implements SyncStrategyContract
                 $subModel = $model->$relationName()->create($related);
             }
 
-            if (($index = array_search($subModel->id, $unSyncedSubModels)) !== false) {
+            if (($index = array_search($subModel->getKey(), $unSyncedSubModels)) !== false) {
                 unset($unSyncedSubModels[$index]);
             }
         }
@@ -45,7 +45,6 @@ class SyncHasMany implements SyncStrategyContract
 //            $subModel = $subModel->newModelQuery()->find($id);
 //            if (isset($related['DIRTY'])) {
 //                if ($subModel) {
-//                    /* @phpstan-ignore-next-line */
 //                    $subModel->fill($related)->save();
 //                    $model->$relationName()->save($subModel);
 //                } else {
