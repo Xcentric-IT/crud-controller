@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class FilterIsNotNull implements Filter
 {
-    public function __invoke(Builder $query, $value, string $property): void
+    public function __invoke(Builder $query, mixed $value, string $property): void
     {
         if (Str::contains($property, ':')) {
             $property = explode(':', $property)[1];
