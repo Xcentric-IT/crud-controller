@@ -28,8 +28,7 @@ class EntityRelationsService
         $parsedData = [];
         $parsedRelationData = [];
         foreach ($data as $key => $item) {
-            $key_camel = Str::camel($key);
-            if ($model->isRelation($key_camel)) {
+            if ($model->isRelation($key)) {
                 $isFillable = !$model->isFillable($key) && $model->isFillable($key . '_id');
                 if ($isFillable) {
                     $parsedData[$key . '_id'] = (!empty($item) && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;
