@@ -3,7 +3,6 @@
 namespace XcentricItFoundation\LaravelCrudController\Sort;
 
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\Sorts\Sort;
 
 class SortByRelationField implements Sort
@@ -13,15 +12,14 @@ class SortByRelationField implements Sort
         [$relation, $field] = explode('.', $property, 2);
 
         $relationName = ltrim($relation, '-');
-        $relationTable = $query->getModel()->$relationName()->getRelated()->getTable();
-        $sortDirection = AllowedSort::parseSortDirection($relation);
+        $sortDirection = $descending ? 'desc' : 'asc';
+
+        $relationModel = $query->getModel()->$relationName()->getRelated();
 
         $query
-            ->select($query->getModel()->getTable().'.*', $relationTable . '.' . $field)
-            ->leftJoin($relationTable, $relationName . '_id', '=', $relationTable . '.id')
-            ->orderByRaw(sprintf(
-                '%s.%s %s',
-                $relationTable, $field, $sortDirection
-            ));
+            ->orderBy(
+                $relationModel::select($field)->whereColumn('id', $relationName . '_id'),
+                $sortDirection
+            );
     }
 }
