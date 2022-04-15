@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property string $parent_class_id
  * @property string $module_id
- * @property-read Entity $parentClass
+ * @property-read Entity $parent_class
  * @property-read Module $module
  * @property-read Collection<EntityField> $fields
  * @property-read Collection<EntityInterface> $interfaces
@@ -22,7 +22,7 @@ class Entity extends AbstractModel
 {
     protected $table = 'entities';
 
-    public function parentClass(): BelongsTo
+    public function parent_class(): BelongsTo
     {
         return $this->belongsTo(__CLASS__, 'parent_class_id');
     }

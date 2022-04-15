@@ -152,7 +152,7 @@ class EntityTest extends TestCase
     public function testUpdate(): void
     {
         /** @var Entity $entity */
-        $entity = Entity::query()->with(['parentClass', 'module'])->firstOrFail();
+        $entity = Entity::query()->with(['parent_class', 'module'])->firstOrFail();
 
         $data = $entity->toArray();
         $data['name'] = 'Test Updated Model';
@@ -193,7 +193,7 @@ class EntityTest extends TestCase
     public function testUpdateWithRelations(): void
     {
         /** @var Entity $entity */
-        $entity = Entity::query()->with(['parentClass', 'module', 'fields', 'interfaces'])->firstOrFail();
+        $entity = Entity::query()->with(['parent_class', 'module', 'fields', 'interfaces'])->firstOrFail();
 
         /** @var EntityInterface $entityInterface */
         $entityInterface = EntityInterface::query()->where('name', '=', 'TestInterfaceThree')->firstOrFail();
