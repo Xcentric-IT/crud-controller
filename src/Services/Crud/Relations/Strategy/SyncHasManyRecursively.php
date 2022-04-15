@@ -41,7 +41,7 @@ class SyncHasManyRecursively implements SyncStrategyContract
                 unset($unSyncedSubModels[$index]);
             }
 
-            $this->entityRelationsService->fillRelationshipsRecursively($subModel, $relations);
+            $this->fillRelationships($subModel, $relations);
         }
 
         foreach ($unSyncedSubModels as $unSyncedSubModel) {
@@ -53,5 +53,10 @@ class SyncHasManyRecursively implements SyncStrategyContract
     protected function prepareRelationData(array $data): array
     {
         return $data;
+    }
+
+    protected function fillRelationships(Model $model, array $relations): void
+    {
+        $this->entityRelationsService->fillRelationshipsRecursively($model, $relations);
     }
 }

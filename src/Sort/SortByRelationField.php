@@ -9,14 +9,17 @@ class SortByRelationField implements Sort
 {
     public function __invoke(Builder $query, bool $descending, string $property): void
     {
-        $splits = explode('.', $property);
-        $relation = $splits[0];
-        $relationTable = $query->getModel()->$relation()->getRelated()->getTable();
-        $field = $splits[1];
+        [$relation, $field] = explode('.', $property, 2);
+
+        $relationName = ltrim($relation, '-');
+        $sortDirection = $descending ? 'desc' : 'asc';
+
+        $relationModel = $query->getModel()->$relationName()->getRelated();
 
         $query
-            ->select($query->getModel()->getTable().'.*', $relationTable . '.' . $field)
-            ->leftJoin($relationTable, $relation . '_id', '=', $relationTable . '.id')
-            ->orderByRaw($field);
+            ->orderBy(
+                $relationModel::select($field)->whereColumn('id', $relationName . '_id'),
+                $sortDirection
+            );
     }
 }

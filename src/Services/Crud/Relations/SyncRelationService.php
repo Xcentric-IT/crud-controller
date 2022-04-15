@@ -39,7 +39,7 @@ class SyncRelationService
 
         resolve($syncStrategyClass)(
             $model,
-            $this->relationFieldCheckerService->getRelationNameByField($field),
+            $field,
             $value,
         );
     }
@@ -62,7 +62,7 @@ class SyncRelationService
 
         resolve($syncStrategyClass)(
             $model,
-            $this->relationFieldCheckerService->getRelationNameByField($field),
+            $field,
             $value,
         );
     }
