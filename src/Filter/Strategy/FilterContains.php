@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Spatie\QueryBuilder\Filters\Filter;
 use Illuminate\Support\Str;
 
-class FilterExact implements Filter
+class FilterContains implements Filter
 {
     public function __invoke(Builder $query, mixed $value, string $property): void
     {
@@ -14,6 +14,6 @@ class FilterExact implements Filter
             $property = explode(':', $property)[1];
         }
 
-        $query->where($property, '=', $value);
+        $query->where($property, 'like', '%' . $value . '%');
     }
 }

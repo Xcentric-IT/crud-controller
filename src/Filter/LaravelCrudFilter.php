@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 use Illuminate\Support\Str;
-use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterDateSearch;
-use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterAfterDate;
-use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterBeforeDate;
-use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterExact;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterContains;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEndsWith;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEqualDate;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNotNull;
@@ -17,6 +17,7 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterStartsWith;
 
 /**
  * Class LaravelCrudFilter
@@ -28,14 +29,15 @@ class LaravelCrudFilter
         'isNull' => FilterIsNull::class,
         'isNotNull' => FilterIsNotNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
-        'eq' => FilterExact::class,
-        'beforeDate' => FilterBeforeDate::class,
-        'afterDate' => FilterAfterDate::class,
-        'dateSearch' => FilterDateSearch::class,
+        'eq' => FilterEqual::class,
+        'eqDate' => FilterEqualDate::class,
         'lt' => FilterLowerThan::class,
         'lte' => FilterLowerThanOrEqual::class,
         'gt' => FilterGreaterThan::class,
         'gte' => FilterGreaterThanOrEqual::class,
+        'contains' => FilterContains::class,
+        'startsWith' => FilterStartsWith::class,
+        'endsWith' => FilterEndsWith::class,
     ];
 
     public function parseFilters(Request $request, QueryBuilder $queryBuilder, array $additionalFilters): void
@@ -53,6 +55,7 @@ class LaravelCrudFilter
     protected function getFilterMapping(string $property, array $additionalFilters): AllowedFilter
     {
         $filter = $property;
+
         if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
@@ -65,6 +68,6 @@ class LaravelCrudFilter
             }
         }
 
-        return AllowedFilter::partial($filter);
+        return AllowedFilter::exact($filter);
     }
 }

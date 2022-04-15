@@ -3,20 +3,25 @@
 namespace XcentricItFoundation\LaravelCrudController\Sort;
 
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\Sorts\Sort;
 
 class SortByRelationField implements Sort
 {
     public function __invoke(Builder $query, bool $descending, string $property): void
     {
-        $splits = explode('.', $property);
-        $relation = $splits[0];
-        $relationTable = $query->getModel()->$relation()->getRelated()->getTable();
-        $field = $splits[1];
+        [$relation, $field] = explode('.', $property, 2);
+
+        $relationName = ltrim($relation, '-');
+        $relationTable = $query->getModel()->$relationName()->getRelated()->getTable();
+        $sortDirection = AllowedSort::parseSortDirection($relation);
 
         $query
             ->select($query->getModel()->getTable().'.*', $relationTable . '.' . $field)
-            ->leftJoin($relationTable, $relation . '_id', '=', $relationTable . '.id')
-            ->orderByRaw($field);
+            ->leftJoin($relationTable, $relationName . '_id', '=', $relationTable . '.id')
+            ->orderByRaw(sprintf(
+                '%s.%s %s',
+                $relationTable, $field, $sortDirection
+            ));
     }
 }
