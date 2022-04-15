@@ -35,8 +35,12 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit tests",
-        "analyse": "vendor/bin/phpstan analyse"
+        "test": [
+            "vendor/bin/phpunit"
+        ],
+        "phpstan": [
+            "vendor/bin/phpstan"
+        ]
     },
     "config": {
         "sort-packages": true
