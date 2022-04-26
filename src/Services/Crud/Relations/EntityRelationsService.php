@@ -6,6 +6,7 @@ namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\DetachBelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncWithoutDetachBelongsToMany;
@@ -15,6 +16,7 @@ class EntityRelationsService
 {
     private const ADD_REMOVE_RELATIONS = [
         BelongsToMany::class,
+        MorphToMany::class
     ];
 
     public function __construct(
