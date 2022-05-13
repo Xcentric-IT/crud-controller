@@ -16,12 +16,16 @@ use XcentricItFoundation\LaravelCrudController\ModelHelper;
 
 class GenerateRoutes extends Command
 {
+    private const EXCLUDE_MODULE = 'exclude-module';
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'bizhive:generate-routes {module?}';
+    protected $signature = 'bizhive:generate-routes
+                            {module?}
+                            {--' . self::EXCLUDE_MODULE . '= : Which module (by providing its name) to be excluded from generating routes}';
 
     /**
      * @var string
@@ -63,13 +67,14 @@ class GenerateRoutes extends Command
     public function handle(): int
     {
         $module = $this->argument('module');
+        $excludeModule = $this->option(self::EXCLUDE_MODULE);
 
         if (is_null($module) === false) {
             // generate routes only for specified module
             $this->generateRoutesForModule($module);
             return CommandAlias::SUCCESS;
         }
-        $modules = $this->getAllModules();
+        $modules = $this->getAllModules($excludeModule);
         $this->info('Generating routes...');
         foreach ($modules as $module) {
             $this->generateRoutesForModule($module);
@@ -151,7 +156,7 @@ class GenerateRoutes extends Command
     /**
      * @return string[]
      */
-    private function getAllModules(): array
+    private function getAllModules(?string $excludeModule): array
     {
         $modules = ['app'];
         if (File::exists(app()->basePath('modules')) === false) {
@@ -159,8 +164,13 @@ class GenerateRoutes extends Command
         }
         $modulesDirs = File::directories(app()->basePath('modules'));
         foreach ($modulesDirs as $module) {
-            array_push($modules, basename($module));
+            $modules[] = basename($module);
         }
+
+        $modules = array_filter($modules, function ($item) use ($excludeModule) {
+            return $item !== $excludeModule;
+        });
+
         return $modules;
     }
 
