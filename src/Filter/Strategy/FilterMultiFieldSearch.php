@@ -66,6 +66,7 @@ class FilterMultiFieldSearch extends FiltersExact
         return $array;
     }
 
+    // ToDo Refactor this since we don't use camel relations anymore, also fix phpstan
     protected function withRelationConstraint(Builder $query, mixed $value, string $property): void
     {
         [$relation, $property] = collect(explode('.', $property))

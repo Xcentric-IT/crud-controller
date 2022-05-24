@@ -36,29 +36,25 @@ class LaravelCrudController extends BaseController
 
     public const PER_PAGE = 20;
 
-    protected array $additionalFilters = [];
-
     public function __construct(
-        protected Request $request,
         protected QueryParserService $queryParserService
     ) {
-        $this->queryParserService->setAdditionalFilters($this->additionalFilters);
     }
 
-    public function readOne(string $id): JsonResource
+    public function readOne(Request $request, string $id): JsonResource
     {
         return $this->createResource(
             $this->queryParserService
-                ->parseRequest($this->request, $this->getModel())
+                ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
                 ->findOrFail($id)
         );
     }
 
-    public function readMore(): JsonResource
+    public function readMore(Request $request): JsonResource
     {
         return $this->createResourceCollection(
             $this->queryParserService
-                ->parseRequest($this->request, $this->getModel())
+                ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
                 ->paginate($this->perPage())
         );
     }
@@ -95,13 +91,13 @@ class LaravelCrudController extends BaseController
         return $this->returnNoContent();
     }
 
-    public function addRelation(string $id, string $relationField): JsonResource
+    public function addRelation(Request $request, string $id, string $relationField): JsonResource
     {
-        $this->request->validate([
+        $request->validate([
             'id' => 'required|string',
         ]);
 
-        $data = $this->request->all();
+        $data = $request->all();
         $model = $this->createNewModelQuery()->findOrFail($id);
 
         $actionPayloadData = [
@@ -116,9 +112,9 @@ class LaravelCrudController extends BaseController
         return $this->createResource($model);
     }
 
-    public function removeRelation(string $id, string $relationField, string $relationId = null): JsonResource
+    public function removeRelation(Request $request, string $id, string $relationField, string $relationId = null): JsonResource
     {
-        $data = $relationId !== null ? ['id' => $relationId] : $this->request->all();
+        $data = $relationId !== null ? ['id' => $relationId] : $request->all();
 
         $model = $this->createNewModelQuery()->findOrFail($id);
 
@@ -167,8 +163,10 @@ class LaravelCrudController extends BaseController
 
     protected function getRequestValidator(): LaravelCrudRequest
     {
+        /** @var Request $request */
+        $request = request();
         /** @var Route $route */
-        $route = $this->request->route();
+        $route = $request->route();
 
         $requestClass = ModelHelper::getRequestValidatorFqn($route->getAction('model'), $route->getAction('namespace'));
 
@@ -181,10 +179,17 @@ class LaravelCrudController extends BaseController
 
     protected function getModel(): string
     {
+        /** @var Request $request */
+        $request = request();
         /** @var Route $route */
-        $route = $this->request->route();
+        $route = $request->route();
 
         return ModelHelper::getModelFqn($route->getAction('model'), $route->getAction('namespace'));
+    }
+
+    protected function getAdditionalFilters(): array
+    {
+        return [];
     }
 
     protected function createNewModelQuery(): Builder
@@ -224,8 +229,10 @@ class LaravelCrudController extends BaseController
 
     protected function perPage(): int
     {
-        return $this->request->query->has('per_page')
-            ? $this->request->query->getInt('per_page')
+        /** @var Request $request */
+        $request = request();
+        return $request->query->has('per_page')
+            ? $request->query->getInt('per_page')
             : self::PER_PAGE;
     }
 
@@ -245,6 +252,8 @@ class LaravelCrudController extends BaseController
     {
         $this->getRequestValidator()->validate();
 
-        return $this->request->all();
+        /** @var Request $request */
+        $request = request();
+        return $request->all();
     }
 }

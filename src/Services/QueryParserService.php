@@ -11,18 +11,18 @@ use XcentricItFoundation\LaravelCrudController\Sort\SortByRelationField;
 
 class QueryParserService
 {
-    protected array $additionalFilters = [];
 
     /**
      * @param Request $request
      * @param string $model
+     * @param array $additionalFilters
      * @return QueryBuilder
      */
-    public function parseRequest(Request $request, string $model): QueryBuilder
+    public function parseRequest(Request $request, string $model, array $additionalFilters): QueryBuilder
     {
         $request = $this->prepareRequest($request);
         $query = QueryBuilder::for($model, $request);
-        $this->parseFilters($request, $query)
+        $this->parseFilters($request, $query, $additionalFilters)
             ->parseSorts($request, $query)
             ->parseRelationships($request, $query);
 
@@ -32,12 +32,13 @@ class QueryParserService
     /**
      * @param Request $request
      * @param QueryBuilder $queryBuilder
+     * @param array $additionalFilters
      * @return $this
      */
-    public function parseFilters(Request $request, QueryBuilder $queryBuilder): self
+    public function parseFilters(Request $request, QueryBuilder $queryBuilder, array $additionalFilters): self
     {
         $filterService = new LaravelCrudFilter();
-        $filterService->parseFilters($request, $queryBuilder, $this->additionalFilters);
+        $filterService->parseFilters($request, $queryBuilder, $additionalFilters);
 
         return $this;
     }
@@ -69,11 +70,6 @@ class QueryParserService
         );
 
         return $this;
-    }
-
-    public function setAdditionalFilters(array $additionalFilters): void
-    {
-        $this->additionalFilters = $additionalFilters;
     }
 
     protected function getSortMapping(string $sort): string | AllowedSort
