@@ -343,11 +343,17 @@ class EntityTest extends TestCase
 
         $apiUrl = $this->getApiUrl();
 
-        foreach ($this->fields() as $field) {
+        // ToDo Improve filtering tests and implement tests for all supported filter types
+        $filterFields = [
+            'name' => 1,
+            'module_id' => 2
+        ];
+
+        foreach ($filterFields as $field => $expectedCount) {
             $response = $this->get($apiUrl . '?filter[' . $field . ']=' . $entity->$field);
 
             $response->assertStatus(200);
-            $response->assertJsonCount(1, 'data');
+            $response->assertJsonCount($expectedCount, 'data');
 
             self::assertEquals($entity->$field, $response->json('data.0.'.$field));
         }
