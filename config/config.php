@@ -7,4 +7,5 @@ return [
     'has-multiple-namespaces' => false,
     'routes-prefix' => 'api',
     'middlewares' => [],
+    'merge_model_data_to_request' => false,
 ];
