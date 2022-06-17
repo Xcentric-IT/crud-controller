@@ -173,6 +173,32 @@ class EntityTest extends TestCase
         }
     }
 
+    public function testUpdateWithMergeModelData(): void
+    {
+        config(['laravel-crud-controller.merge_model_data_to_request' => true]);
+
+        /** @var Entity $entity */
+        $entity = Entity::query()->firstOrFail();
+
+        $data = $entity->toArray();
+        $data['name'] = 'Test Updated Model';
+
+        $requestData = $data;
+        unset($requestData['parent_class_id'], $requestData['module_id']);
+
+        $response = $this->put($this->getApiUrl($entity->getKey()), $requestData);
+
+        $response->assertStatus(200);
+
+        $fieldName = 'name';
+        foreach ($this->fields() as $field) {
+            if ($field === $fieldName) {
+                self::assertNotEquals($entity->name, $response->json('data.' . $fieldName));
+            }
+            self::assertEquals($data[$field], $response->json('data.' . $field));
+        }
+    }
+
     public function testUpdateInvalidId(): void
     {
         $apiUrl = $this->getApiUrl($this->generateUuid());
