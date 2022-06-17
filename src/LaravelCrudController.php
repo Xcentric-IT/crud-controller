@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Providers\FormRequestServiceProvider;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,22 +62,26 @@ class LaravelCrudController extends BaseController
 
     public function create(): JsonResource
     {
-        $data = $this->requestData();
+        $this->resolveRequestValidator();
 
         $model = $this->createModel();
 
-        $this->onCreate(new CrudActionPayload($data, $model));
+        $this->onCreate(new CrudActionPayload($this->requestData(), $model));
 
         return $this->createResource($model);
     }
 
     public function update(string $id): JsonResource
     {
-        $data = $this->requestData();
-
         $model = $this->createNewModelQuery()->findOrFail($id);
 
-        $this->onUpdate(new CrudActionPayload($data, $model));
+        if (config('laravel-crud-controller.merge_model_data_to_request') === true) {
+            $this->mergeModelDataToRequest($model);
+        }
+
+        $this->resolveRequestValidator();
+
+        $this->onUpdate(new CrudActionPayload($this->requestData(), $model));
 
         return $this->createResource($model);
     }
@@ -161,7 +166,7 @@ class LaravelCrudController extends BaseController
         return response()->json(null, self::HTTP_STATUS_EMPTY);
     }
 
-    protected function getRequestValidator(): LaravelCrudRequest
+    protected function getRequestValidator(): string
     {
         /** @var Request $request */
         $request = request();
@@ -174,7 +179,7 @@ class LaravelCrudController extends BaseController
             $requestClass = LaravelCrudRequest::class;
         }
 
-        return resolve($requestClass);
+        return $requestClass;
     }
 
     protected function getModel(): string
@@ -192,14 +197,23 @@ class LaravelCrudController extends BaseController
         return [];
     }
 
-    protected function createNewModelQuery(): Builder
+    /**
+     * Request validation is called on resolving Request class
+     * @see FormRequestServiceProvider::boot()
+     */
+    protected function resolveRequestValidator(): LaravelCrudRequest
     {
-        return resolve($this->getModel())->newQuery();
+        return resolve($this->getRequestValidator());
     }
 
     protected function createModel(): Model
     {
         return resolve($this->getModel());
+    }
+
+    protected function createNewModelQuery(): Builder
+    {
+        return $this->createModel()->newQuery();
     }
 
     protected function getCreateAction(): ExecutableAction
@@ -250,10 +264,27 @@ class LaravelCrudController extends BaseController
 
     protected function requestData(): array
     {
-        $this->getRequestValidator()->validate();
+        return request()?->all();
+    }
 
-        /** @var Request $request */
-        $request = request();
-        return $request->all();
+    protected function mergeModelDataToRequest(Model $model): void
+    {
+        $requestClassFqn = $this->getRequestValidator();
+
+        /** @var LaravelCrudRequest $requestClass */
+        $requestClass = new $requestClassFqn;
+
+        $relations = [];
+        foreach (array_keys($requestClass->rules()) as $fieldName) {
+            if ($model->isRelation($fieldName)) {
+                $relations[] = $fieldName;
+            }
+        }
+
+        if (count($relations) > 0) {
+            $model->load($relations);
+        }
+
+        request()?->mergeIfMissing($model->toArray());
     }
 }
