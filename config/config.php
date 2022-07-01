@@ -8,4 +8,5 @@ return [
     'routes-prefix' => 'api',
     'middlewares' => [],
     'merge_model_data_to_request' => false,
+    'sync_parent_relations_max_depth' => 5,
 ];
