@@ -14,6 +14,17 @@ class SyncHasManyRecursivelyWithNewRelationEntries extends SyncHasManyRecursivel
         return $data;
     }
 
+    protected function resolveRelationFields(Model $model, array $item, array $idMapping): array
+    {
+        [$subModelData, $relations] = $this->entityRelationsService->resolveRelationFields($model, $item);
+
+        if (isset($subModelData['parent_id'])) {
+            $subModelData['parent_id'] =  $idMapping[$subModelData['parent_id']];
+        }
+
+        return [$subModelData, $relations];
+    }
+
     protected function fillRelationships(Model $model, array $relations): void
     {
         $this->entityRelationsService->fillRelationshipsRecursively($model, $relations, true);

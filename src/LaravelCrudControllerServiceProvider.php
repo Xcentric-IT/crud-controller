@@ -2,8 +2,10 @@
 
 namespace XcentricItFoundation\LaravelCrudController;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use XcentricItFoundation\LaravelCrudController\Console\Commands\GenerateRoutes;
+use XcentricItFoundation\LaravelCrudController\Policies\LaravelCrudPolicy;
 use XcentricItFoundation\LaravelCrudController\Providers\LaravelCrudRouteServiceProvider;
 
 class LaravelCrudControllerServiceProvider extends ServiceProvider
@@ -26,6 +28,19 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
                 GenerateRoutes::class
             ]);
         }
+
+        Gate::guessPolicyNamesUsing(function ($modelClass) {
+            $policyClass = str_replace('Models', 'Policies', $modelClass) . 'Policy';
+            if (class_exists($policyClass)) {
+                return $policyClass;
+            }
+
+            return class_exists('App\\Policies\\DefaultCrudPolicy') ? 'App\\Policies\\DefaultCrudPolicy' : LaravelCrudPolicy::class;
+        });
+
+        Gate::after(function ($user, $ability, $result) {
+            return $result ?? true;
+        });
     }
 
     /**
@@ -35,7 +50,7 @@ class LaravelCrudControllerServiceProvider extends ServiceProvider
     {
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'laravel-crud-controller');
-        
+
         $this->app->register(LaravelCrudRouteServiceProvider::class);
     }
 }
