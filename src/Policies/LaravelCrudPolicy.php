@@ -9,27 +9,27 @@ class LaravelCrudPolicy
 {
     use HandlesAuthorization;
 
-    public function readOne(Authenticatable $user, $model)
+    public function readOne(?Authenticatable $user, $model)
     {
         return true;
     }
 
-    public function readMore(Authenticatable $user)
+    public function readMore(?Authenticatable $user)
     {
         return true;
     }
 
-    public function create(Authenticatable $user)
+    public function create(?Authenticatable $user)
     {
         return true;
     }
 
-    public function update(Authenticatable $user, $model)
+    public function update(?Authenticatable $user, $model)
     {
         return true;
     }
 
-    public function delete(Authenticatable $user, $model)
+    public function delete(?Authenticatable $user, $model)
     {
         return true;
     }
