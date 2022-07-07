@@ -16,6 +16,9 @@ class SyncHasManyRecursivelyWithNewRelationEntries extends SyncHasManyRecursivel
 
     protected function resolveRelationFields(Model $model, array $item, array $idMapping): array
     {
+        if (config('laravel-crud-controller.auto_sync_parent_relations') === false) {
+            return parent::resolveRelationFields($model, $item, $idMapping);
+        }
         [$subModelData, $relations] = $this->entityRelationsService->resolveRelationFields($model, $item);
 
         if (isset($subModelData['parent_id'])) {
