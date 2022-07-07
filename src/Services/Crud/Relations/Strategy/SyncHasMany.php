@@ -16,10 +16,12 @@ class SyncHasMany implements SyncStrategyContract
         $subModelClass = $model->$relationName()->getRelated();
         $relationsData = $data;
 
-        $firstItem = Arr::first($relationsData, null, []);
+        if (config('laravel-crud-controller.auto_sync_parent_relations') === true) {
+            $firstItem = Arr::first($relationsData, null, []);
 
-        if (array_key_exists('parent', $firstItem)) {
-            $relationsData = $this->buildSortedList($relationsData);
+            if (array_key_exists('parent', $firstItem)) {
+                $relationsData = $this->buildSortedList($relationsData);
+            }
         }
 
         foreach ($relationsData as $related) {

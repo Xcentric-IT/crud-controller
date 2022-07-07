@@ -277,7 +277,7 @@ class LaravelCrudController extends BaseController
 
     protected function requestData(): array
     {
-        return request()?->all();
+        return request()->all();
     }
 
     protected function mergeModelDataToRequest(Model $model): void
@@ -298,6 +298,6 @@ class LaravelCrudController extends BaseController
             $model->load($relations);
         }
 
-        request()?->mergeIfMissing($model->toArray());
+        request()->mergeIfMissing($model->toArray());
     }
 }
