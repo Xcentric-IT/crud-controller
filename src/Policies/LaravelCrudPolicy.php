@@ -2,35 +2,34 @@
 
 namespace XcentricItFoundation\LaravelCrudController\Policies;
 
-use App\Models\AdminUser;
-use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class LaravelCrudPolicy
 {
     use HandlesAuthorization;
 
-    public function readOne(User $user, $model)
+    public function readOne(Authenticatable $user, $model)
     {
         return true;
     }
 
-    public function readMore(User $user)
+    public function readMore(Authenticatable $user)
     {
         return true;
     }
 
-    public function create(User $user)
+    public function create(Authenticatable $user)
     {
         return true;
     }
 
-    public function update(User $user, $model)
+    public function update(Authenticatable $user, $model)
     {
         return true;
     }
 
-    public function delete(User $user, $model)
+    public function delete(Authenticatable $user, $model)
     {
         return true;
     }
