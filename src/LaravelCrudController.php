@@ -44,15 +44,21 @@ class LaravelCrudController extends BaseController
 
     public function readOne(Request $request, string $id): JsonResource
     {
+        $model  = $this->queryParserService
+            ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
+            ->findOrFail($id);
+
+        $this->authorize('readOne', [$this->getModel(), $model]);
+
         return $this->createResource(
-            $this->queryParserService
-                ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
-                ->findOrFail($id)
+            $model
         );
     }
 
     public function readMore(Request $request): JsonResource
     {
+        $this->authorize('readMore', $this->getModel());
+
         return $this->createResourceCollection(
             $this->queryParserService
                 ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
@@ -62,6 +68,8 @@ class LaravelCrudController extends BaseController
 
     public function create(): JsonResource
     {
+        $this->authorize('create', $this->getModel());
+
         $this->resolveRequestValidator();
 
         $model = $this->createModel();
@@ -74,6 +82,8 @@ class LaravelCrudController extends BaseController
     public function update(string $id): JsonResource
     {
         $model = $this->createNewModelQuery()->findOrFail($id);
+
+        $this->authorize('update', [$this->getModel(), $model]);
 
         if (config('laravel-crud-controller.merge_model_data_to_request') === true) {
             $this->mergeModelDataToRequest($model);
@@ -90,6 +100,7 @@ class LaravelCrudController extends BaseController
     {
         $data = [];
         $model = $this->createNewModelQuery()->findOrFail($id);
+        $this->authorize('delete', [$this->getModel(), $model]);
 
         $this->onDelete(new CrudActionPayload($data, $model));
 
@@ -104,6 +115,7 @@ class LaravelCrudController extends BaseController
 
         $data = $request->all();
         $model = $this->createNewModelQuery()->findOrFail($id);
+        $this->authorize('update', [$this->getModel(), $model]);
 
         $actionPayloadData = [
             'relationField' => $relationField,
@@ -122,6 +134,7 @@ class LaravelCrudController extends BaseController
         $data = $relationId !== null ? ['id' => $relationId] : $request->all();
 
         $model = $this->createNewModelQuery()->findOrFail($id);
+        $this->authorize('update', [$this->getModel(), $model]);
 
         $actionPayloadData = [
             'relationField' => $relationField,
