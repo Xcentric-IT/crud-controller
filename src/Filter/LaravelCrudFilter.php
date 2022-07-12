@@ -2,9 +2,7 @@
 
 namespace XcentricItFoundation\LaravelCrudController\Filter;
 
-use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
 use Illuminate\Support\Str;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterContains;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEndsWith;
@@ -19,10 +17,6 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOr
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterStartsWith;
 
-/**
- * Class LaravelCrudFilter
- * @package XcentricItFoundation\LaravelCrudController\Filter
- */
 class LaravelCrudFilter
 {
     private array $availableFilters = [
@@ -40,34 +34,41 @@ class LaravelCrudFilter
         'endsWith' => FilterEndsWith::class,
     ];
 
-    public function parseFilters(Request $request, QueryBuilder $queryBuilder, array $additionalFilters): void
+    public function parseFilters(array $filters, array $additionalFilters, bool $stripRelationName = false): array
     {
-        $filters = $request->input('filter', []);
         $allowedFilters = [];
 
         foreach ($filters as $filterName => $filterValue) {
-            $allowedFilters[] = $this->getFilterMapping($filterName, $additionalFilters);
+            $allowedFilters[] = $this->getFilterMapping($filterName, $additionalFilters, $stripRelationName);
         }
 
-        $queryBuilder->allowedFilters($allowedFilters);
+        return $allowedFilters;
     }
 
-    protected function getFilterMapping(string $property, array $additionalFilters): AllowedFilter
+    protected function getFilterMapping(string $property, array $additionalFilters, bool $stripRelationName = false): AllowedFilter
     {
         $filter = $property;
 
         if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
+            $internalName = ($stripRelationName === true)
+                ? substr($filter, strrpos($filter, '.') + 1)
+                : $filter;
+
             if (array_key_exists($filter, $this->availableFilters)) {
-                return AllowedFilter::custom($property, new $this->availableFilters[$filter]);
+                return AllowedFilter::custom($property, new $this->availableFilters[$filter], $internalName);
             }
 
             if (array_key_exists($filter, $additionalFilters)) {
-                return AllowedFilter::custom($property, new $additionalFilters[$filter]);
+                return AllowedFilter::custom($property, new $additionalFilters[$filter], $internalName);
             }
         }
 
-        return AllowedFilter::exact($filter);
+        $internalName = ($stripRelationName === true)
+            ? substr($filter, strrpos($filter, '.') + 1)
+            : $filter;
+
+        return AllowedFilter::exact($filter, $internalName);
     }
 }
