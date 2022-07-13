@@ -49,12 +49,9 @@ class LaravelCrudFilter
     {
         $filter = $property;
 
+        $internalName = $this->getInternalName($property, $stripRelationName);
         if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
-
-            $internalName = ($stripRelationName === true)
-                ? substr($filter, strrpos($filter, '.') + 1)
-                : $filter;
 
             if (array_key_exists($filter, $this->availableFilters)) {
                 return AllowedFilter::custom($property, new $this->availableFilters[$filter], $internalName);
@@ -65,10 +62,16 @@ class LaravelCrudFilter
             }
         }
 
-        $internalName = ($stripRelationName === true)
-            ? substr($filter, strrpos($filter, '.') + 1)
-            : $filter;
-
         return AllowedFilter::exact($filter, $internalName);
+    }
+
+    private function getInternalName(string $property, bool $stripRelationName = false): string
+    {
+        if (Str::contains($property, ':')) {
+            $property = explode(':', $property)[1];
+        }
+        return ($stripRelationName === true)
+            ? substr($property, strrpos($property, '.') + 1)
+            : $property;
     }
 }

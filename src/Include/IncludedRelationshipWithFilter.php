@@ -78,8 +78,8 @@ class IncludedRelationshipWithFilter implements IncludeInterface
     {
         $filterValues = [];
         foreach ($this->rawFiltersValues as $key => $value) {
-            if (Str::contains(':', $key)) {
-                $key = Str::substr($key, 0, strpos($key, ":"));
+            if (Str::contains($key, ':')) {
+                $key = explode(':', $key)[1];
             }
             $field = $this->getRelationFieldFromFilterKey($key);
             $relation = $this->getRelationNameFromFilterKey($key);
@@ -120,11 +120,17 @@ class IncludedRelationshipWithFilter implements IncludeInterface
 
     protected function getRelationNameFromFilterKey(string $key): string
     {
+        if (Str::contains($key, ':')) {
+            $key = explode(':', $key)[1];
+        }
         return Str::substr($key, 0, strrpos($key, '.'));
     }
 
     protected function getRelationFieldFromFilterKey(string $key): string
     {
+        if (Str::contains($key, ':')) {
+            $key = explode(':', $key)[1];
+        }
         return Str::substr($key, strrpos($key, '.') + 1);
     }
 }
