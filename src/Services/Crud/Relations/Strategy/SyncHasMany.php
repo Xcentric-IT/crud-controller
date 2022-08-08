@@ -14,15 +14,8 @@ class SyncHasMany implements SyncStrategyContract
     {
         $unSyncedSubModels = $model->$relationName()->pluck('id')->all();
         $subModelClass = $model->$relationName()->getRelated();
-        $relationsData = $data;
 
-        if (config('laravel-crud-controller.auto_sync_parent_relations') === true) {
-            $firstItem = Arr::first($relationsData, null, []);
-
-            if (array_key_exists('parent', $firstItem)) {
-                $relationsData = $this->buildSortedList($relationsData);
-            }
-        }
+        $relationsData = $this->buildSortedList($data);
 
         foreach ($relationsData as $related) {
             $id = $related['id'] ?? null;
@@ -49,6 +42,16 @@ class SyncHasMany implements SyncStrategyContract
 
     protected function buildSortedList(array $elements): array
     {
+        if (config('laravel-crud-controller.auto_sync_parent_relations') === false) {
+            return $elements;
+        }
+
+        $firstItem = Arr::first($elements, null, []);
+
+        if (!array_key_exists('parent', $firstItem)) {
+            return $elements;
+        }
+
         $list = [];
         $children = [];
 
