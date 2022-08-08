@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\EntityRelationsService;
 
 class SyncHasManyRecursively extends SyncHasMany
@@ -19,15 +18,8 @@ class SyncHasManyRecursively extends SyncHasMany
     {
         $unSyncedSubModels = $model->$relationName()->pluck('id')->all();
         $subModelClass = $model->$relationName()->getRelated();
-        $relationsData = $data;
 
-        if (config('laravel-crud-controller.auto_sync_parent_relations') === true) {
-            $firstItem = Arr::first($relationsData, null, []);
-
-            if (array_key_exists('parent', $firstItem)) {
-                $relationsData = $this->buildSortedList($relationsData);
-            }
-        }
+        $relationsData = $this->buildSortedList($data);
 
         $newSubModelsIdMapping = [];
 
