@@ -3,17 +3,11 @@
 namespace XcentricItFoundation\LaravelCrudController\Filter\Strategy;
 
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\QueryBuilder\Filters\Filter;
-use Illuminate\Support\Str;
 
-class FilterIsNull implements Filter
+class FilterIsNull extends BaseFilter
 {
-    public function __invoke(Builder $query, mixed $value, string $property): void
+    protected function applyFilter(Builder $query, mixed $value, string $property): void
     {
-        if (Str::contains($property, ':')) {
-            $property = explode(':', $property)[1];
-        }
-
         $query->whereNull($property);
     }
 }
