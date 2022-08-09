@@ -50,6 +50,7 @@ class LaravelCrudFilter
         $filter = $property;
 
         $internalName = $this->getInternalName($property, $stripRelationName);
+
         if (Str::contains($property, ':')) {
             $filter = explode(':', $property)[0];
 
@@ -70,6 +71,7 @@ class LaravelCrudFilter
         if (Str::contains($property, ':')) {
             $property = explode(':', $property)[1];
         }
+
         return ($stripRelationName === true)
             ? substr($property, strrpos($property, '.') + 1)
             : $property;
