@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Spatie\QueryBuilder\Filters\FiltersExact;
 use Spatie\QueryBuilder\Includes\IncludeInterface;
 use Spatie\QueryBuilder\QueryBuilder as SpatieQueryBuilder;
 
