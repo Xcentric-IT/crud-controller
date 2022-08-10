@@ -44,15 +44,14 @@ class LaravelCrudController extends BaseController
 
     public function readOne(Request $request, string $id): JsonResource
     {
-        $model  = $this->queryParserService
+        /** @var Model $model */
+        $model = $this->queryParserService
             ->parseRequest($request, $this->getModel(), $this->getAdditionalFilters())
             ->findOrFail($id);
 
         $this->authorize('readOne', [$this->getModel(), $model]);
 
-        return $this->createResource(
-            $model
-        );
+        return $this->createResource($model);
     }
 
     public function readMore(Request $request): JsonResource
@@ -81,6 +80,7 @@ class LaravelCrudController extends BaseController
 
     public function update(string $id): JsonResource
     {
+        /** @var Model $model */
         $model = $this->createNewModelQuery()->findOrFail($id);
 
         $this->authorize('update', [$this->getModel(), $model]);
@@ -93,12 +93,14 @@ class LaravelCrudController extends BaseController
 
         $this->onUpdate(new CrudActionPayload($this->requestData(), $model));
 
-        return $this->createResource($model);
+        return $this->createResource($model->fresh());
     }
 
     public function delete(string $id): JsonResponse
     {
         $data = [];
+
+        /** @var Model $model */
         $model = $this->createNewModelQuery()->findOrFail($id);
         $this->authorize('delete', [$this->getModel(), $model]);
 
@@ -114,15 +116,17 @@ class LaravelCrudController extends BaseController
         ]);
 
         $data = $request->all();
+
+        /** @var Model $model */
         $model = $this->createNewModelQuery()->findOrFail($id);
         $this->authorize('update', [$this->getModel(), $model]);
 
-        $actionPayloadData = [
+        $actionPayloadAdditionalData = [
             'relationField' => $relationField,
         ];
 
         $actionPayload = new CrudActionPayload($data, $model);
-        $actionPayload->setAdditionalData($actionPayloadData);
+        $actionPayload->setAdditionalData($actionPayloadAdditionalData);
 
         $this->onAddRelation($actionPayload);
 
@@ -133,16 +137,17 @@ class LaravelCrudController extends BaseController
     {
         $data = $relationId !== null ? ['id' => $relationId] : $request->all();
 
+        /** @var Model $model */
         $model = $this->createNewModelQuery()->findOrFail($id);
         $this->authorize('update', [$this->getModel(), $model]);
 
-        $actionPayloadData = [
+        $actionPayloadAdditionalData = [
             'relationField' => $relationField,
             'add' => false,
         ];
 
         $actionPayload = new CrudActionPayload($data, $model);
-        $actionPayload->setAdditionalData($actionPayloadData);
+        $actionPayload->setAdditionalData($actionPayloadAdditionalData);
 
         $this->onRemoveRelation($actionPayload);
 
