@@ -29,7 +29,7 @@ class LaravelCrudFilter
         'isNotNull' => FilterIsNotNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
         'eq' => FilterEqual::class,
-        'notEqual' => FilterNotEqual::class,
+        'notEq' => FilterNotEqual::class,
         'eqDate' => FilterEqualDate::class,
         'lt' => FilterLowerThan::class,
         'lte' => FilterLowerThanOrEqual::class,
