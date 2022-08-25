@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace XcentricItFoundation\LaravelCrudController\Filter;
 
 use Spatie\QueryBuilder\AllowedFilter;
@@ -15,7 +17,10 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterNotEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterStartsWith;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterTreeView;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterTreeViewReverse;
 
 class LaravelCrudFilter
 {
@@ -24,6 +29,7 @@ class LaravelCrudFilter
         'isNotNull' => FilterIsNotNull::class,
         'multiFieldSearch' => FilterMultiFieldSearch::class,
         'eq' => FilterEqual::class,
+        'notEqual' => FilterNotEqual::class,
         'eqDate' => FilterEqualDate::class,
         'lt' => FilterLowerThan::class,
         'lte' => FilterLowerThanOrEqual::class,
@@ -32,6 +38,8 @@ class LaravelCrudFilter
         'contains' => FilterContains::class,
         'startsWith' => FilterStartsWith::class,
         'endsWith' => FilterEndsWith::class,
+        'treeView' => FilterTreeView::class,
+        'treeViewReverse' => FilterTreeViewReverse::class,
     ];
 
     public function parseFilters(array $filters, array $additionalFilters, bool $stripRelationName = false): array
