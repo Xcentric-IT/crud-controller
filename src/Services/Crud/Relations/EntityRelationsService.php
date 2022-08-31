@@ -42,7 +42,7 @@ class EntityRelationsService
                 continue;
             }
 
-            if (!$model->isGuarded($foreignKey)) {
+            if (is_array($item) && !$model->isFillable($key)) {
                 $parsedRelationData[$key] = $item;
             }
         }
