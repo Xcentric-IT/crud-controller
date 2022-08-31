@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Contract\SyncStrategyContract;
 
@@ -12,32 +13,41 @@ class SyncHasMany implements SyncStrategyContract
 {
     public function __invoke(Model $model, string $relationName, array $data): void
     {
-        $unSyncedSubModels = $model->$relationName()->pluck('id')->all();
-        $subModelClass = $model->$relationName()->getRelated();
+        $relation = $this->getRelation($model, $relationName);
+        $subModelClass = $relation->getRelated();
+
+        $unSyncedSubModels = $relation->pluck('id')->all();
 
         $relationsData = $this->buildSortedList($data);
 
         foreach ($relationsData as $related) {
             $id = $related['id'] ?? null;
-            /** @var Model|null $subModel */
-            $subModel = $subModelClass->newModelQuery()->find($id);
-            if ($subModel instanceof Model) {
-                $subModel->fill($related)->save();
-                $model->$relationName()->save($subModel);
-            } else {
-                /** @var Model $subModel */
-                $subModel = $model->$relationName()->create($related);
+
+            if ($id === null) {
+                $relation->create($related);
+                continue;
             }
 
-            if (($index = array_search($subModel->getKey(), $unSyncedSubModels)) !== false) {
+            $subModel = $subModelClass->newModelQuery()->find($id);
+
+            if (!$subModel instanceof Model) {
+                continue;
+            }
+
+            $subModel->fill($related);
+            $relation->save($subModel);
+
+            if (($index = array_search($subModel->getKey(), $unSyncedSubModels, true)) !== false) {
                 unset($unSyncedSubModels[$index]);
             }
         }
 
-        foreach ($unSyncedSubModels as $unSyncedSubModel) {
-            $record = $model->$relationName()->where('id', '=', $unSyncedSubModel)->first();
-            $record->delete();
-        }
+        $relation->whereIn('id', $unSyncedSubModels)->delete();
+    }
+
+    protected function getRelation(Model $model, string $relationName): HasMany
+    {
+        return $model->$relationName();
     }
 
     protected function buildSortedList(array $elements): array
@@ -46,6 +56,7 @@ class SyncHasMany implements SyncStrategyContract
             return $elements;
         }
 
+        /** @var array $firstItem */
         $firstItem = Arr::first($elements, null, []);
 
         if (!array_key_exists('parent', $firstItem)) {

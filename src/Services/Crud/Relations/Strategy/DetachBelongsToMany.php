@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Contract\SyncStrategyContract;
 
 class DetachBelongsToMany implements SyncStrategyContract
@@ -15,6 +16,12 @@ class DetachBelongsToMany implements SyncStrategyContract
             return;
         }
 
-        $model->$relationName()->detach($data['id']);
+        $relation = $this->getRelation($model, $relationName);
+        $relation->detach($data['id']);
+    }
+
+    protected function getRelation(Model $model, string $relationName): BelongsToMany
+    {
+        return $model->$relationName();
     }
 }
