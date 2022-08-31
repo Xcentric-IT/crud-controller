@@ -16,8 +16,10 @@ class SyncHasManyRecursively extends SyncHasMany
 
     public function __invoke(Model $model, string $relationName, array $data): void
     {
-        $unSyncedSubModels = $model->$relationName()->pluck('id')->all();
-        $subModelClass = $model->$relationName()->getRelated();
+        $relation = $this->getRelation($model, $relationName);
+
+        $unSyncedSubModels = $relation->pluck('id')->all();
+        $subModelClass = $relation->getRelated();
 
         $relationsData = $this->buildSortedList($data);
 
@@ -25,34 +27,33 @@ class SyncHasManyRecursively extends SyncHasMany
 
         foreach ($relationsData as $item) {
             $subModelId = $item['id'] ?? null;
+
             $item = $this->prepareRelationData($item);
 
             $id = $item['id'] ?? null;
-            /** @var Model|null $subModel */
-            $subModel = $subModelClass->newModelQuery()->find($id);
+
+            $subModel = $id !== null
+                ? $subModelClass->newModelQuery()->find($id)
+                : null;
 
             [$subModelData, $relations] = $this->resolveRelationFields($subModelClass, $item, $newSubModelsIdMapping);
 
-            if ($subModel instanceof Model) {
-                $subModel->fill($subModelData)->save();
-                $model->$relationName()->save($subModel);
-            } else {
-                /** @var Model $subModel */
-                $subModel = $model->$relationName()->create($subModelData);
+            if (!$subModel instanceof Model) {
+                $subModel = $relation->create($subModelData);
                 $newSubModelsIdMapping[$subModelId] = $subModel->getKey();
-            }
+            } else {
+                $subModel->fill($subModelData)->save();
+                $relation->save($subModel);
 
-            if (($index = array_search($subModel->getKey(), $unSyncedSubModels)) !== false) {
-                unset($unSyncedSubModels[$index]);
+                if (($index = array_search($subModel->getKey(), $unSyncedSubModels, true)) !== false) {
+                    unset($unSyncedSubModels[$index]);
+                }
             }
 
             $this->fillRelationships($subModel, $relations);
         }
 
-        foreach ($unSyncedSubModels as $unSyncedSubModel) {
-            $record = $model->$relationName()->where('id', '=', $unSyncedSubModel)->first();
-            $record->delete();
-        }
+        $relation->whereIn('id', $unSyncedSubModels)->delete();
     }
 
     protected function prepareRelationData(array $data): array

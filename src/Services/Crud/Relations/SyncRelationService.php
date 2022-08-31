@@ -29,7 +29,7 @@ class SyncRelationService
     ) {
     }
 
-    public function applySync(Model $model, string $field, array $value): void
+    public function applySync(Model $model, string $field, array|null $value): void
     {
         $syncStrategyClass = $this->resolveSyncStrategy($model, $field);
 
@@ -44,7 +44,7 @@ class SyncRelationService
         );
     }
 
-    public function applySyncRecursively(Model $model, string $field, array $value, bool $withNewRelationEntries): void
+    public function applySyncRecursively(Model $model, string $field, array|null $value, bool $withNewRelationEntries): void
     {
         $syncStrategyClass = $this->resolveSyncStrategy($model, $field);
 

@@ -7,7 +7,6 @@ namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Support\Str;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\DetachBelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncWithoutDetachBelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\RelationFieldCheckerService;
@@ -29,18 +28,25 @@ class EntityRelationsService
     {
         $parsedData = [];
         $parsedRelationData = [];
+
         foreach ($data as $key => $item) {
-            if ($model->isRelation($key)) {
-                $isFillable = !$model->isFillable($key) && $model->isFillable($key . '_id');
-                if ($isFillable) {
-                    $parsedData[$key . '_id'] = (!empty($item) && is_array($item) && array_key_exists('id', $item)) ? $item['id'] : $item;
-                } else {
-                    $parsedRelationData[$key] = $item;
-                }
-            } else {
+            if (!$model->isRelation($key)) {
                 $parsedData[$key] = $item;
+                continue;
+            }
+
+            $foreignKey = $key . '_id';
+
+            if ($model->isFillable($foreignKey)) {
+                $parsedData[$foreignKey] = (is_array($item) && array_key_exists('id', $item))? $item['id'] : $item;
+                continue;
+            }
+
+            if (!$model->isGuarded($foreignKey)) {
+                $parsedRelationData[$key] = $item;
             }
         }
+
         return [$parsedData, $parsedRelationData];
     }
 
@@ -54,6 +60,7 @@ class EntityRelationsService
     public function fillRelationshipsRecursively(Model $model, array $data, bool $withNewRelationEntries = false): void
     {
         [$modelData, $relations] = $this->resolveRelationFields($model, $data);
+
         foreach ($relations as $field => $value) {
             $this->syncRelationService->applySyncRecursively($model, $field, $value, $withNewRelationEntries);
         }
