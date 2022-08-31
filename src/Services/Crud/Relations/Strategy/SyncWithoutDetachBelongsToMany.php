@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Contract\SyncStrategyContract;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\PivotDataService;
 
@@ -21,12 +22,12 @@ class SyncWithoutDetachBelongsToMany implements SyncStrategyContract
             return;
         }
 
-        $id = $data['id'];
-        $relation = $model->$relationName();
+        $relation = $this->getRelation($model, $relationName);
+        $subModelClass = $relation->getRelated();
 
-        /** @var Model $subModel */
-        $subModel = $relation->getRelated();
-        $subModel = $subModel->newModelQuery()->find($id);
+        $id = $data['id'];
+
+        $subModel = $subModelClass->newModelQuery()->find($id);
 
         if ($subModel === null) {
             return;
@@ -39,5 +40,10 @@ class SyncWithoutDetachBelongsToMany implements SyncStrategyContract
         $relation->syncWithoutDetaching([
             $subModel->getKey() => $pivotData,
         ]);
+    }
+
+    protected function getRelation(Model $model, string $relationName): BelongsToMany
+    {
+        return $model->$relationName();
     }
 }
