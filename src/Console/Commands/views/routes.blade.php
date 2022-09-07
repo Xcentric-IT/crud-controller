@@ -106,6 +106,21 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      */
     $router->post('/', ['uses' => '\{{$model['controller']}}@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
+    * @OA\Post(
+    *     path="/{{$routePrefix}}{{$model['slug']}}/mass-create",
+    *     operationId="create{{str_replace('\\', '', $namespace)}}{{$model['name']}}",
+    *     tags={"{{$namespace}}\{{$model['name']}}"},
+    *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
+    *     summary="Create {{$model['humanName']}}.",
+    *     requestBody={"$ref": "#/components/requestBodies/{{$namespace}}\{{$model['name']}}"},
+    *     @OA\Response(response=201, description="Successful operation.", @OA\JsonContent(ref="#/components/schemas/{{$namespace}}\{{$model['name']}}")),
+    *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated."))),
+    *     @OA\Response(response=422, description="Error: Unprocessable Content."),
+    *     @OA\Response(response=500, description="Internal server error.")
+    * )
+    */
+    $router->post('/mass-create', ['uses' => '\{{$model['controller']}}@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    /**
      * @OA\Put(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",
      *     operationId="put{{str_replace('\\', '', $namespace)}}{{$model['name']}}",
@@ -128,6 +143,21 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      * )
      */
     $router->put('/{id}', ['uses' => '\{{$model['controller']}}@update', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    /**
+    * @OA\Delete(
+    *     path="/{{$routePrefix}}{{$model['slug']}}/mass-delete",
+    *     operationId="delete{{str_replace('\\', '', $namespace)}}{{$model['name']}}",
+    *     tags={"{{$namespace}}\{{$model['name']}}"},
+    *     summary="Delete {{$model['humanName']}}.",
+    *     @OA\Parameter(in="header", name="Accept", required=true, example="application/json"),
+    *     @OA\Parameter(name="ids", in="path", required=true, @OA\Schema(type="array", format="uuid")),
+    *     @OA\Response(response=204, description="No content, delete successful."),
+    *     @OA\Response(response=401, description="Unauthenticated.", @OA\JsonContent(@OA\Property(property="message", type="string", default="Unauthenticated."))),
+    *     @OA\Response(response=404, description="{{ucfirst($model['humanName'])}} not found."),
+    *     @OA\Response(response=500, description="Internal server error.")
+    * )
+    */
+    $router->delete('/mass-delete', ['uses' => '\{{$model['controller']}}@massDelete', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Delete(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",
