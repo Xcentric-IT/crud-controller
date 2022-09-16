@@ -12,12 +12,15 @@ use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEqualDate;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterGreaterThanOrEqual;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterHas;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIn;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNotNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterIsNull;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThan;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterLowerThanOrEqual;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterMultiFieldSearch;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterNotEqual;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterNotIn;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterStartsWith;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterTreeView;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterTreeViewReverse;
@@ -38,6 +41,9 @@ class LaravelCrudFilter
         'contains' => FilterContains::class,
         'startsWith' => FilterStartsWith::class,
         'endsWith' => FilterEndsWith::class,
+        'in' => FilterIn::class,
+        'notIn' => FilterNotIn::class,
+        'has' => FilterHas::class,
         'treeView' => FilterTreeView::class,
         'treeViewReverse' => FilterTreeViewReverse::class,
     ];
