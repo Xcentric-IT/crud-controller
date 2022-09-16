@@ -16,7 +16,9 @@ class SyncHasMany implements SyncStrategyContract
         $relation = $this->getRelation($model, $relationName);
         $subModelClass = $relation->getRelated();
 
-        $unSyncedSubModels = $relation->pluck('id')->all();
+        $newSubModels = [];
+        $existingSubModels = [];
+        $removeSubModels = $relation->pluck('id', 'id')->all();
 
         $relationsData = $this->buildSortedList($data);
 
@@ -24,7 +26,9 @@ class SyncHasMany implements SyncStrategyContract
             $id = $related['id'] ?? null;
 
             if ($id === null) {
-                $relation->create($related);
+                $newSubModels[] = [
+                    'data' => $related,
+                ];
                 continue;
             }
 
@@ -34,15 +38,25 @@ class SyncHasMany implements SyncStrategyContract
                 continue;
             }
 
-            $subModel->fill($related);
-            $relation->save($subModel);
+            if (array_key_exists($subModel->getKey(), $removeSubModels)) {
+                unset($removeSubModels[$subModel->getKey()]);
 
-            if (($index = array_search($subModel->getKey(), $unSyncedSubModels, true)) !== false) {
-                unset($unSyncedSubModels[$index]);
+                $existingSubModels[] = [
+                    'model' => $subModel,
+                    'data' => $related,
+                ];
             }
         }
 
-        $relation->whereIn('id', $unSyncedSubModels)->delete();
+        $this->deleteSubModels($relation, $removeSubModels);
+
+        foreach ($newSubModels as $newSubModel) {
+            $this->createSubModel($relation, $newSubModel['data']);
+        }
+
+        foreach ($existingSubModels as $existingSubModel) {
+            $this->updateSubModel($relation, $existingSubModel['model'], $existingSubModel['data']);
+        }
     }
 
     protected function getRelation(Model $model, string $relationName): HasMany
@@ -99,5 +113,21 @@ class SyncHasMany implements SyncStrategyContract
         }
 
         return $list;
+    }
+
+    protected function createSubModel(HasMany $relation, array $data): Model
+    {
+        return $relation->create($data);
+    }
+
+    protected function updateSubModel(HasMany $relation, Model $subModel, array $data): Model
+    {
+        $subModel->fill($data);
+        return $relation->save($subModel);
+    }
+
+    protected function deleteSubModels(HasMany $relation, array $subModels): void
+    {
+        $relation->whereIn('id', $subModels)->delete();
     }
 }

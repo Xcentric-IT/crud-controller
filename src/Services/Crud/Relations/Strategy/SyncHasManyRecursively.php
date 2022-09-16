@@ -17,9 +17,11 @@ class SyncHasManyRecursively extends SyncHasMany
     public function __invoke(Model $model, string $relationName, array $data): void
     {
         $relation = $this->getRelation($model, $relationName);
-
-        $unSyncedSubModels = $relation->pluck('id')->all();
         $subModelClass = $relation->getRelated();
+
+        $newSubModels = [];
+        $existingSubModels = [];
+        $removeSubModels = $relation->pluck('id', 'id')->all();
 
         $relationsData = $this->buildSortedList($data);
 
@@ -39,21 +41,37 @@ class SyncHasManyRecursively extends SyncHasMany
             [$subModelData, $relations] = $this->resolveRelationFields($subModelClass, $item, $newSubModelsIdMapping);
 
             if (!$subModel instanceof Model) {
-                $subModel = $relation->create($subModelData);
-                $newSubModelsIdMapping[$subModelId] = $subModel->getKey();
-            } else {
-                $subModel->fill($subModelData)->save();
-                $relation->save($subModel);
-
-                if (($index = array_search($subModel->getKey(), $unSyncedSubModels, true)) !== false) {
-                    unset($unSyncedSubModels[$index]);
-                }
+                $newSubModels[] = [
+                    'data' => $subModelData,
+                    'relations' => $relations,
+                    'initialId' => $subModelId,
+                ];
+                continue;
             }
 
-            $this->fillRelationships($subModel, $relations);
+            if (array_key_exists($subModel->getKey(), $removeSubModels)) {
+                unset($removeSubModels[$subModel->getKey()]);
+
+                $existingSubModels[] = [
+                    'model' => $subModel,
+                    'data' => $subModelData,
+                    'relations' => $relations,
+                ];
+            }
         }
 
-        $relation->whereIn('id', $unSyncedSubModels)->delete();
+        $this->deleteSubModels($relation, $removeSubModels);
+
+        foreach ($newSubModels as $newSubModel) {
+            $subModel = $this->createSubModel($relation, $newSubModel['data']);
+            $newSubModelsIdMapping[$newSubModel['initialId']] = $subModel->getKey();
+            $this->fillRelationships($subModel, $newSubModel['relations']);
+        }
+
+        foreach ($existingSubModels as $existingSubModel) {
+            $subModel = $this->updateSubModel($relation, $existingSubModel['model'], $existingSubModel['data']);
+            $this->fillRelationships($subModel, $existingSubModel['relations']);
+        }
     }
 
     protected function prepareRelationData(array $data): array
@@ -61,13 +79,13 @@ class SyncHasManyRecursively extends SyncHasMany
         return $data;
     }
 
-    protected function resolveRelationFields(Model $model, array $item, array $idMapping): array
-    {
-        return $this->entityRelationsService->resolveRelationFields($model, $item);
-    }
-
     protected function fillRelationships(Model $model, array $relations): void
     {
         $this->entityRelationsService->fillRelationshipsRecursively($model, $relations);
+    }
+
+    protected function resolveRelationFields(Model $model, array $item, array $idMapping): array
+    {
+        return $this->entityRelationsService->resolveRelationFields($model, $item);
     }
 }
