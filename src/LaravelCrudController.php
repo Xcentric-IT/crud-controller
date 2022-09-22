@@ -23,6 +23,8 @@ use XcentricItFoundation\LaravelCrudController\Actions\Crud\AddRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Create;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\CrudActionPayload;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Delete;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassCreate;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassDelete;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\RemoveRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
@@ -33,6 +35,7 @@ class LaravelCrudController extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    public const HTTP_STATUS_SUCCESS_CREATED = 201;
     public const HTTP_STATUS_EMPTY = 204;
 
     public const PER_PAGE = 20;
@@ -78,6 +81,21 @@ class LaravelCrudController extends BaseController
         return $this->createResource($model);
     }
 
+    public function massCreate(): JsonResponse
+    {
+        $this->authorize('massCreate', $this->getModel());
+
+        $model = $this->createModel();
+
+        $requestValidatorClass = $this->getRequestValidator();
+        /** @var LaravelCrudRequest $request */
+        $request = new $requestValidatorClass;
+
+        $this->onMassCreate(new CrudActionPayload($this->requestData(), $model), $request);
+
+        return $this->returnSuccessCreated();
+    }
+
     public function update(string $id): JsonResource
     {
         /** @var Model $model */
@@ -105,6 +123,18 @@ class LaravelCrudController extends BaseController
         $this->authorize('delete', [$this->getModel(), $model]);
 
         $this->onDelete(new CrudActionPayload($data, $model));
+
+        return $this->returnNoContent();
+    }
+
+    public function massDelete(): JsonResponse
+    {
+        $this->authorize('massDelete', $this->getModel());
+
+        $model = $this->createModel();
+        $data = $this->requestData();
+
+        $this->onMassDelete(new CrudActionPayload($data, $model));
 
         return $this->returnNoContent();
     }
@@ -159,6 +189,11 @@ class LaravelCrudController extends BaseController
         return $this->getCreateAction()->run($actionPayload);
     }
 
+    protected function onMassCreate(ActionPayloadInterface $actionPayload, LaravelCrudRequest $request): ExecutableActionResponseContract
+    {
+        return $this->getMassCreateAction($request)->run($actionPayload);
+    }
+
     protected function onUpdate(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         return $this->getUpdateAction()->run($actionPayload);
@@ -167,6 +202,11 @@ class LaravelCrudController extends BaseController
     protected function onDelete(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         return $this->getDeleteAction()->run($actionPayload);
+    }
+
+    protected function onMassDelete(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
+    {
+        return $this->getMassDeleteAction()->run($actionPayload);
     }
 
     protected function onAddRelation(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
@@ -182,6 +222,11 @@ class LaravelCrudController extends BaseController
     protected function returnNoContent(): JsonResponse
     {
         return response()->json(null, self::HTTP_STATUS_EMPTY);
+    }
+
+    protected function returnSuccessCreated(): JsonResponse
+    {
+        return response()->json(null, self::HTTP_STATUS_SUCCESS_CREATED);
     }
 
     protected function getRequestValidator(): string
@@ -239,6 +284,13 @@ class LaravelCrudController extends BaseController
         return resolve(Create::class);
     }
 
+    protected function getMassCreateAction(LaravelCrudRequest $request): ExecutableAction
+    {
+        return resolve(MassCreate::class, [
+            'request' => $request,
+        ]);
+    }
+
     protected function getUpdateAction(): ExecutableAction
     {
         return resolve(Update::class);
@@ -247,6 +299,11 @@ class LaravelCrudController extends BaseController
     protected function getDeleteAction(): ExecutableAction
     {
         return resolve(Delete::class);
+    }
+
+    protected function getMassDeleteAction(): ExecutableAction
+    {
+        return resolve(MassDelete::class);
     }
 
     protected function getAddRelationAction(): ExecutableAction

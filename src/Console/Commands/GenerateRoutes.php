@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 use XcentricItFoundation\LaravelCrudController\Attribute\SkipRouteGenerate;
 use XcentricItFoundation\LaravelCrudController\LaravelCrudController;
@@ -17,6 +18,8 @@ use XcentricItFoundation\LaravelCrudController\ModelHelper;
 class GenerateRoutes extends Command
 {
     private const EXCLUDE_MODULE = 'exclude-module';
+
+    private const ROUTES_TEMPLATE_NAMESPACE = 'CommandRoutes';
 
     /**
      * The name and signature of the console command.
@@ -32,37 +35,20 @@ class GenerateRoutes extends Command
      */
     protected $description = 'Generate routes for BizHive Modules';
 
-    /**
-     * @var string
-     */
     private string $module;
 
-    /**
-     * @var bool
-     */
     private bool $moduleIsApp = false;
 
-    /**
-     * @var string
-     */
     private string $moduleNamespace;
 
-    /**
-     * @var string
-     */
     private string $template = 'routes';
 
-    /**
-     * @var string
-     */
     private string $rootPath = 'modules';
-
-    const ROUTES_TEMPLATE_NAMESPACE = 'CommandRoutes';
 
     /**
      * Execute the console command.
      *
-     * @return int
+     * @throws ReflectionException
      */
     public function handle(): int
     {
@@ -84,6 +70,9 @@ class GenerateRoutes extends Command
         return CommandAlias::SUCCESS;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     protected function generateRoutesForModule(string $module): int
     {
         $this->module = $module;
@@ -96,12 +85,10 @@ class GenerateRoutes extends Command
         $this->setModuleNamespace();
         $this->addViewNamespace();
         $this->generateRoutes();
+
         return CommandAlias::SUCCESS;
     }
 
-    /**
-     * @return bool
-     */
     private function validateModule(): bool
     {
         $this->rootPath = ($this->moduleIsApp) ? '' : 'modules';
@@ -135,13 +122,19 @@ class GenerateRoutes extends Command
             : 'Modules\\' . $this->module;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     private function generateRoutes(): void
     {
+        $models = $this->getModelsArray();
+
         $view = view(self::ROUTES_TEMPLATE_NAMESPACE . '::' . $this->template, [
             'module' => Str::snake($this->module, '-'),
             'moduleName' => $this->module,
             'namespace' => $this->moduleNamespace,
-            'models' => $this->getModelsArray(),
+            'models' => $models,
+            'controllersFqn' => $this->getAllControllersInUse($models),
             'routePrefix' => $this->routePrefix()
         ]);
 
@@ -177,7 +170,7 @@ class GenerateRoutes extends Command
     /**
      * Prepare list of models in given module for which routes need to be generated
      *
-     * @return array
+     * @throws ReflectionException
      */
     private function getModelsArray(): array
     {
@@ -185,20 +178,33 @@ class GenerateRoutes extends Command
         foreach ($this->getModuleModels()->values() as $modelClass) {
             $modelName = Str::substr($modelClass, strrpos($modelClass, '\\') + 1);
             $controller = $this->resolveModelController($modelName);
+            $controllerClassName = class_basename($controller) . '::class';
             $models[] = [
                 'class' => $modelClass,
                 'name' => $modelName,
                 'humanName' => str_replace('-', ' ', Str::snake($modelName,  '-')),
                 'slug' => Str::snake($modelName,  '-'),
-                'controller' => $controller
+                'controller' => $controller,
+                'controllerClassName' => $controllerClassName
             ];
         }
         return $models;
     }
 
     /**
-     * @return Collection
+     * Prepare list of controllers in use for routes that will be generated
      */
+    private function getAllControllersInUse(array $models): array
+    {
+        $controllersInUse = [];
+        foreach ($models as $model) {
+            if (!in_array($model['controller'], $controllersInUse, true)) {
+                $controllersInUse[] = $model['controller'];
+            }
+        }
+        return $controllersInUse;
+    }
+
     private function getModuleModels(): Collection
     {
         $modelsPath = $this->modulePath('Models');
@@ -216,8 +222,7 @@ class GenerateRoutes extends Command
     }
 
     /**
-     * @param string $class
-     * @return bool
+     * @throws ReflectionException
      */
     private function modelValidForRouteGenerating(string $class): bool
     {
@@ -233,10 +238,13 @@ class GenerateRoutes extends Command
         }
         if ($reflection->getAttributes(SkipRouteGenerate::class)){
             return false;
-        };
+        }
         return true;
     }
-    
+
+    /**
+     * @throws ReflectionException
+     */
     private function resolveModelController(string $modelName): string
     {
         $controllerClass = ModelHelper::getControllerFqn($modelName, $this->moduleNamespace);
@@ -247,9 +255,7 @@ class GenerateRoutes extends Command
     }
 
     /**
-     * @param string $controllerClass
-     * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function controllerIsValid(string $controllerClass): bool
     {
@@ -261,9 +267,6 @@ class GenerateRoutes extends Command
         return $valid;
     }
 
-    /**
-     * @return string
-     */
     private function routePrefix(): string
     {
         if ($this->moduleIsApp === false) {
@@ -277,10 +280,6 @@ class GenerateRoutes extends Command
         View::addNamespace(self::ROUTES_TEMPLATE_NAMESPACE, __DIR__ . DIRECTORY_SEPARATOR . 'views');
     }
 
-    /**
-     * @param string $suffix
-     * @return string
-     */
     private function modulePath(string $suffix = ''): string
     {
         return app()->basePath($this->rootPath)
