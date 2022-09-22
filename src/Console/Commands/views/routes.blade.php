@@ -10,6 +10,9 @@ echo '<?php'
  */
 
 use Illuminate\Support\Facades\Route;
+@foreach($controllersFqn as $controllerFqn)
+use {{ $controllerFqn }};
+@endforeach
 
 @foreach($models as $model)
 /**
@@ -74,7 +77,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
-    $router->get('/', ['uses' => '\{{$model['controller']}}@readMore', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->get('/', ['uses' => {{ $model['controllerClassName'] }} . '@readMore', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Get(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",
@@ -89,7 +92,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
-    $router->get('/{id}', ['uses' => '\{{$model['controller']}}@readOne', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->get('/{id}', ['uses' => {{ $model['controllerClassName'] }} . '@readOne', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Post(
      *     path="/{{$routePrefix}}{{$model['slug']}}",
@@ -104,7 +107,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
-    $router->post('/', ['uses' => '\{{$model['controller']}}@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->post('/', ['uses' => {{ $model['controllerClassName'] }} . '@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
     * @OA\Post(
     *     path="/{{$routePrefix}}{{$model['slug']}}/mass-create",
@@ -119,7 +122,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
     *     @OA\Response(response=500, description="Internal server error.")
     * )
     */
-    $router->post('/mass-create', ['uses' => '\{{$model['controller']}}@massCreate', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->post('/mass-create', ['uses' => {{ $model['controllerClassName'] }} . '@massCreate', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Put(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",
@@ -142,7 +145,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
-    $router->put('/{id}', ['uses' => '\{{$model['controller']}}@update', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->put('/{id}', ['uses' => {{ $model['controllerClassName'] }} . '@update', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
     * @OA\Delete(
     *     path="/{{$routePrefix}}{{$model['slug']}}/mass-delete",
@@ -157,7 +160,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
     *     @OA\Response(response=500, description="Internal server error.")
     * )
     */
-    $router->delete('/mass-delete', ['uses' => '\{{$model['controller']}}@massDelete', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->delete('/mass-delete', ['uses' => {{ $model['controllerClassName'] }} . '@massDelete', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Delete(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",
@@ -172,8 +175,8 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
      *     @OA\Response(response=500, description="Internal server error.")
      * )
      */
-    $router->delete('/{id}', ['uses' => '\{{$model['controller']}}@delete', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
-    $router->put('/{id}/relation/{relationField}', ['uses' => '\{{$model['controller']}}@addRelation', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
-    $router->delete('/{id}/relation/{relationField}/{relationId}', ['uses' => '\{{$model['controller']}}@removeRelation', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->delete('/{id}', ['uses' => {{ $model['controllerClassName'] }} . '@delete', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->put('/{id}/relation/{relationField}', ['uses' => {{ $model['controllerClassName'] }} . '@addRelation', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->delete('/{id}/relation/{relationField}/{relationId}', ['uses' => {{ $model['controllerClassName'] }} . '@removeRelation', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
 });
 @endforeach
