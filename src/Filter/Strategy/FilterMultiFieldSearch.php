@@ -18,12 +18,10 @@ class FilterMultiFieldSearch extends FiltersExact
         $query->where(function(Builder $subQuery) use ($value, $property) {
             $properties = explode(',', $property);
             foreach ($properties as $aProperty) {
-                if ($this->addRelationConstraint) {
-                    if ($this->isRelationProperty($subQuery, $aProperty)) {
-                        $this->withRelationConstraint($subQuery, $value, $aProperty);
+                if ($this->addRelationConstraint && $this->isRelationProperty($subQuery, $aProperty)) {
+                    $this->withRelationConstraint($subQuery, $value, $aProperty);
 
-                        return;
-                    }
+                    return;
                 }
 
                 $wrappedProperty = $subQuery->qualifyColumn($aProperty);
@@ -38,7 +36,6 @@ class FilterMultiFieldSearch extends FiltersExact
                 }
             }
         });
-        $a = $query->toSql();
     }
 
     protected function combinations(array $array): array

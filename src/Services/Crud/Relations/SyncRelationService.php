@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncBelongsTo;
@@ -15,6 +16,7 @@ use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncHasMany;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncHasManyRecursively;
 use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncHasManyRecursivelyWithNewRelationEntries;
+use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncHasOne;
 use XcentricItFoundation\LaravelCrudController\Services\RelationFieldCheckerService;
 
 class SyncRelationService
@@ -79,6 +81,7 @@ class SyncRelationService
             BelongsToMany::class, MorphToMany::class => SyncBelongsToMany::class,
             HasMany::class, MorphMany::class => SyncHasMany::class,
             BelongsTo::class => SyncBelongsTo::class,
+            HasOne::class => SyncHasOne::class,
             default => null,
         };
     }

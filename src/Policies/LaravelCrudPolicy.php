@@ -4,42 +4,43 @@ namespace XcentricItFoundation\LaravelCrudController\Policies;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Database\Eloquent\Model;
 
 class LaravelCrudPolicy
 {
     use HandlesAuthorization;
 
-    public function readOne(?Authenticatable $user, $model)
+    public function readOne(?Authenticatable $user, Model $model): bool
     {
         return true;
     }
 
-    public function readMore(?Authenticatable $user)
+    public function readMore(?Authenticatable $user): bool
     {
         return true;
     }
 
-    public function create(?Authenticatable $user)
+    public function create(?Authenticatable $user): bool
     {
         return true;
     }
 
-    public function update(?Authenticatable $user, $model)
+    public function update(?Authenticatable $user, Model $model): bool
     {
         return true;
     }
 
-    public function delete(?Authenticatable $user, $model)
+    public function delete(?Authenticatable $user, Model $model): bool
     {
         return true;
     }
 
-    public function massCreate(?Authenticatable $user)
+    public function massCreate(?Authenticatable $user): bool
     {
         return true;
     }
 
-    public function massDelete(?Authenticatable $user)
+    public function massDelete(?Authenticatable $user): bool
     {
         return true;
     }
