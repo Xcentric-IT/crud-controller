@@ -83,7 +83,7 @@ class LaravelCrudController extends BaseController
 
     public function massCreate(): JsonResponse
     {
-        $this->authorize('create', $this->getModel());
+        $this->authorize('massCreate', $this->getModel());
 
         $model = $this->createModel();
 
@@ -129,7 +129,7 @@ class LaravelCrudController extends BaseController
 
     public function massDelete(): JsonResponse
     {
-        $this->authorize('delete', $this->getModel());
+        $this->authorize('massDelete', $this->getModel());
 
         $model = $this->createModel();
         $data = $this->requestData();
