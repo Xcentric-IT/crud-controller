@@ -34,4 +34,13 @@ class LaravelCrudPolicy
         return true;
     }
 
+    public function massCreate(?Authenticatable $user)
+    {
+        return true;
+    }
+
+    public function massDelete(?Authenticatable $user)
+    {
+        return true;
+    }
 }

@@ -119,7 +119,7 @@ Route::group(["prefix" => "{{$routePrefix}}{{$model['slug']}}"], function ($rout
     *     @OA\Response(response=500, description="Internal server error.")
     * )
     */
-    $router->post('/mass-create', ['uses' => '\{{$model['controller']}}@create', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
+    $router->post('/mass-create', ['uses' => '\{{$model['controller']}}@massCreate', 'model' => '{{$model['slug']}}', 'namespace' => '{{$namespace}}']);
     /**
      * @OA\Put(
      *     path="/{{$routePrefix}}{{$model['slug']}}/{id}",

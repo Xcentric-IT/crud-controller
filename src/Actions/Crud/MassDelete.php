@@ -12,20 +12,15 @@ class MassDelete extends TransactionableAction
 
     protected function doRun(ActionPayloadInterface $actionPayload): bool
     {
-        $data = [];
-        $ids = $actionPayload->getData();
-        foreach ($ids['ids'] as $id) {
-            $modelFqn = get_class($actionPayload->getModel());
+        /** @var Delete $deleteAction */
+        $deleteAction = resolve(Delete::class);
+
+        foreach ($actionPayload->getData() as $id) {
             /** @var Model $model */
-            $model = new $modelFqn;
-            $model = $model->newQuery()->findOrFail($id);
+            $model = $actionPayload->getModel()->newQuery()->findOrFail($id);
 
-            /** @var CrudActionPayload $crudActionPayload */
-            $crudActionPayload = new CrudActionPayload($data, $model);
-
-            /** @var Delete $delete */
-            $delete = resolve(Delete::class);
-            $delete->run($crudActionPayload);
+            $crudActionPayload = new CrudActionPayload([], $model);
+            $deleteAction->run($crudActionPayload);
         }
 
         return true;

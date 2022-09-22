@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace XcentricItFoundation\LaravelCrudController\Actions\Crud;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\LaravelCrudRequest;
 
@@ -16,21 +16,21 @@ class MassCreate extends TransactionableAction
     ) {
     }
 
+    /**
+     * @throws ValidationException
+     */
     protected function doRun(ActionPayloadInterface $actionPayload): bool
     {
-        foreach ($actionPayload->getData() as $payloadData) {
-            Validator::make($payloadData, $this->request->rules())->validate();
+        /** @var Create $createAction */
+        $createAction = resolve(Create::class);
 
-            $modelFqn = get_class($actionPayload->getModel());
-            /** @var Model $model */
-            $model = new $modelFqn;
+        foreach ($actionPayload->getData() as $item) {
+            Validator::make($item, $this->request->rules())->validate();
 
-            /** @var CrudActionPayload $crudActionPayload */
-            $crudActionPayload = new CrudActionPayload($payloadData, $model);
+            $model = $actionPayload->getModel()->newInstance();
 
-            /** @var Create $create */
-            $create = resolve(Create::class);
-            $create->run($crudActionPayload);
+            $crudActionPayload = new CrudActionPayload($item, $model);
+            $createAction->run($crudActionPayload);
         }
 
         return true;
