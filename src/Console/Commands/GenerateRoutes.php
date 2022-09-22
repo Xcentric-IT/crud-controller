@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\Console\Command\Command as CommandAlias;
 use XcentricItFoundation\LaravelCrudController\Attribute\SkipRouteGenerate;
 use XcentricItFoundation\LaravelCrudController\LaravelCrudController;
@@ -135,13 +136,19 @@ class GenerateRoutes extends Command
             : 'Modules\\' . $this->module;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     private function generateRoutes(): void
     {
+        $models = $this->getModelsArray();
+
         $view = view(self::ROUTES_TEMPLATE_NAMESPACE . '::' . $this->template, [
             'module' => Str::snake($this->module, '-'),
             'moduleName' => $this->module,
             'namespace' => $this->moduleNamespace,
-            'models' => $this->getModelsArray(),
+            'models' => $models,
+            'controllersFqn' => $this->getAllControllersInUse($models),
             'routePrefix' => $this->routePrefix()
         ]);
 
@@ -177,7 +184,7 @@ class GenerateRoutes extends Command
     /**
      * Prepare list of models in given module for which routes need to be generated
      *
-     * @return array
+     * @throws ReflectionException
      */
     private function getModelsArray(): array
     {
@@ -185,15 +192,31 @@ class GenerateRoutes extends Command
         foreach ($this->getModuleModels()->values() as $modelClass) {
             $modelName = Str::substr($modelClass, strrpos($modelClass, '\\') + 1);
             $controller = $this->resolveModelController($modelName);
+            $controllerClassName = class_basename($controller) . '::class';
             $models[] = [
                 'class' => $modelClass,
                 'name' => $modelName,
                 'humanName' => str_replace('-', ' ', Str::snake($modelName,  '-')),
                 'slug' => Str::snake($modelName,  '-'),
-                'controller' => $controller
+                'controller' => $controller,
+                'controllerClassName' => $controllerClassName
             ];
         }
         return $models;
+    }
+
+    /**
+     * Prepare list of controllers in use for routes that will be generated
+     */
+    private function getAllControllersInUse(array $models): array
+    {
+        $controllersInUse = [];
+        foreach ($models as $model) {
+            if (!in_array($model['controller'], $controllersInUse, true)) {
+                $controllersInUse[] = $model['controller'];
+            }
+        }
+        return $controllersInUse;
     }
 
     /**

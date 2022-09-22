@@ -10,6 +10,11 @@ use Illuminate\Support\Str;
  */
 class ModelHelper
 {
+    public static function getControllerName(string $modelName): string
+    {
+        return "{$modelName}Controller";
+    }
+
     public static function getControllerFqn(string $modelName, ?string $namespace): string
     {
         $modelName = self::buildModelName($modelName);
