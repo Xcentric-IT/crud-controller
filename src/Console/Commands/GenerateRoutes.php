@@ -19,6 +19,8 @@ class GenerateRoutes extends Command
 {
     private const EXCLUDE_MODULE = 'exclude-module';
 
+    private const ROUTES_TEMPLATE_NAMESPACE = 'CommandRoutes';
+
     /**
      * The name and signature of the console command.
      *
@@ -33,37 +35,20 @@ class GenerateRoutes extends Command
      */
     protected $description = 'Generate routes for BizHive Modules';
 
-    /**
-     * @var string
-     */
     private string $module;
 
-    /**
-     * @var bool
-     */
     private bool $moduleIsApp = false;
 
-    /**
-     * @var string
-     */
     private string $moduleNamespace;
 
-    /**
-     * @var string
-     */
     private string $template = 'routes';
 
-    /**
-     * @var string
-     */
     private string $rootPath = 'modules';
-
-    const ROUTES_TEMPLATE_NAMESPACE = 'CommandRoutes';
 
     /**
      * Execute the console command.
      *
-     * @return int
+     * @throws ReflectionException
      */
     public function handle(): int
     {
@@ -85,6 +70,9 @@ class GenerateRoutes extends Command
         return CommandAlias::SUCCESS;
     }
 
+    /**
+     * @throws ReflectionException
+     */
     protected function generateRoutesForModule(string $module): int
     {
         $this->module = $module;
@@ -97,12 +85,10 @@ class GenerateRoutes extends Command
         $this->setModuleNamespace();
         $this->addViewNamespace();
         $this->generateRoutes();
+
         return CommandAlias::SUCCESS;
     }
 
-    /**
-     * @return bool
-     */
     private function validateModule(): bool
     {
         $this->rootPath = ($this->moduleIsApp) ? '' : 'modules';
@@ -219,9 +205,6 @@ class GenerateRoutes extends Command
         return $controllersInUse;
     }
 
-    /**
-     * @return Collection
-     */
     private function getModuleModels(): Collection
     {
         $modelsPath = $this->modulePath('Models');
@@ -239,8 +222,7 @@ class GenerateRoutes extends Command
     }
 
     /**
-     * @param string $class
-     * @return bool
+     * @throws ReflectionException
      */
     private function modelValidForRouteGenerating(string $class): bool
     {
@@ -256,10 +238,13 @@ class GenerateRoutes extends Command
         }
         if ($reflection->getAttributes(SkipRouteGenerate::class)){
             return false;
-        };
+        }
         return true;
     }
-    
+
+    /**
+     * @throws ReflectionException
+     */
     private function resolveModelController(string $modelName): string
     {
         $controllerClass = ModelHelper::getControllerFqn($modelName, $this->moduleNamespace);
@@ -270,9 +255,7 @@ class GenerateRoutes extends Command
     }
 
     /**
-     * @param string $controllerClass
-     * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function controllerIsValid(string $controllerClass): bool
     {
@@ -284,9 +267,6 @@ class GenerateRoutes extends Command
         return $valid;
     }
 
-    /**
-     * @return string
-     */
     private function routePrefix(): string
     {
         if ($this->moduleIsApp === false) {
@@ -300,10 +280,6 @@ class GenerateRoutes extends Command
         View::addNamespace(self::ROUTES_TEMPLATE_NAMESPACE, __DIR__ . DIRECTORY_SEPARATOR . 'views');
     }
 
-    /**
-     * @param string $suffix
-     * @return string
-     */
     private function modulePath(string $suffix = ''): string
     {
         return app()->basePath($this->rootPath)
