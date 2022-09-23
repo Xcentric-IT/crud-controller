@@ -91,7 +91,7 @@ class LaravelCrudController extends BaseController
 
         $this->resolveRequestValidator();
 
-        $this->onUpdate(new CrudActionPayload($this->requestData(), $model));
+        $this->onUpdate(new CrudActionPayload($this->requestData(), $model, $model->fresh()->toArray()));
 
         return $this->createResource($model->fresh());
     }

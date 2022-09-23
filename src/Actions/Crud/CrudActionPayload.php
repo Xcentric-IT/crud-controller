@@ -14,12 +14,18 @@ class CrudActionPayload implements ActionPayloadInterface
     public function __construct(
         protected array $data,
         protected Model $model,
+        protected array $originalData = [],
     ) {
     }
 
     public function getData(): array
     {
         return $this->data;
+    }
+
+    public function getOriginalData(): array
+    {
+        return $this->originalData;
     }
 
     public function getModel(): Model
