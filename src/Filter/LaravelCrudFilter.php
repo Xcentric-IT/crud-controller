@@ -47,7 +47,7 @@ class LaravelCrudFilter
         'has' => FilterHas::class,
         'treeView' => FilterTreeView::class,
         'treeViewReverse' => FilterTreeViewReverse::class,
-        'documetGraph' => DocumentGrafView::class,
+        'documentGraph' => DocumentGrafView::class,
     ];
 
     public function parseFilters(array $filters, array $additionalFilters, bool $stripRelationName = false): array
