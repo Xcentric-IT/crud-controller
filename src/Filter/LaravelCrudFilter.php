@@ -6,6 +6,7 @@ namespace XcentricItFoundation\LaravelCrudController\Filter;
 
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Str;
+use XcentricItFoundation\LaravelCrudController\Filter\Strategy\DocumentGrafView;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterContains;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEndsWith;
 use XcentricItFoundation\LaravelCrudController\Filter\Strategy\FilterEqualDate;
@@ -46,6 +47,7 @@ class LaravelCrudFilter
         'has' => FilterHas::class,
         'treeView' => FilterTreeView::class,
         'treeViewReverse' => FilterTreeViewReverse::class,
+        'documetGraph' => DocumentGrafView::class,
     ];
 
     public function parseFilters(array $filters, array $additionalFilters, bool $stripRelationName = false): array
