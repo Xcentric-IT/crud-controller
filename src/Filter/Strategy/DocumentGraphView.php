@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Modules\Common\Models\DocumentGraf;
 use Spatie\QueryBuilder\Filters\Filter;
 
-class DocumentGrafView implements Filter
+class DocumentGraphView implements Filter
 {
     protected string $type = 'full';
 
@@ -25,17 +25,22 @@ class DocumentGrafView implements Filter
 
         $source = $model->newQuery()->find($value);
 
-        $items = collect([]);
+        if ($source === null) {
+            $source = $model->newQuery()->whereHasMorph('documentable', '*', function($query) use($value) {
+                $query->where('id', '=' , $value);
+            })->first();
+        }
+        $items = collect([$source]);
 
         switch ($this->type) {
             case 'parents':
-                $items = $this->getParents($source);
+                $items = $this->getParents($source, $items);
                 break;
             case 'children':
-                $items = $this->getChildren($source);
+                $items = $this->getChildren($source, $items);
                 break;
             default:
-                $items = $this->getParents($source);
+                $items = $this->getParents($source, $items);
                 $items = $this->getChildren($source, $items);
         }
 
