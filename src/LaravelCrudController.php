@@ -91,9 +91,12 @@ class LaravelCrudController extends BaseController
 
         $this->resolveRequestValidator();
 
-        $this->onUpdate(new CrudActionPayload($this->requestData(), $model, $model->fresh()->toArray()));
+        /** @var Model $freshModel */
+        $freshModel = $model->fresh();
 
-        return $this->createResource($model->fresh());
+        $this->onUpdate(new CrudActionPayload($this->requestData(), $model, $freshModel->toArray()));
+
+        return $this->createResource($freshModel);
     }
 
     public function delete(string $id): JsonResponse
