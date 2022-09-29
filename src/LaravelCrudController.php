@@ -18,30 +18,31 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Routing\Route;
+use Symfony\Component\HttpFoundation\Response;
 use XcentricItFoundation\LaravelCrudController\Actions\ActionPayloadInterface;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\AddRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Create;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\CrudActionPayload;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Delete;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassCreate;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassCreateOrUpdate;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassDelete;
+use XcentricItFoundation\LaravelCrudController\Actions\Crud\MassUpdate;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\RemoveRelation;
 use XcentricItFoundation\LaravelCrudController\Actions\Crud\Update;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableAction;
 use XcentricItFoundation\LaravelCrudController\Actions\ExecutableActionResponseContract;
+use XcentricItFoundation\LaravelCrudController\Services\LoadModelDataMissingFromRequest;
 use XcentricItFoundation\LaravelCrudController\Services\QueryParserService;
 
 class LaravelCrudController extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    public const HTTP_STATUS_SUCCESS_CREATED = 201;
-    public const HTTP_STATUS_EMPTY = 204;
-
     public const PER_PAGE = 20;
 
     public function __construct(
-        protected QueryParserService $queryParserService
+        protected QueryParserService $queryParserService,
     ) {
     }
 
@@ -103,15 +104,44 @@ class LaravelCrudController extends BaseController
 
         $this->authorize('update', [$this->getModel(), $model]);
 
-        if (config('laravel-crud-controller.merge_model_data_to_request') === true) {
-            $this->mergeModelDataToRequest($model);
-        }
+        $requestValidatorClass = $this->getRequestValidator();
+        $this->mergeModelDataToRequest($model, $requestValidatorClass);
 
-        $this->resolveRequestValidator();
+        $this->resolveRequestValidator($requestValidatorClass);
 
         $this->onUpdate(new CrudActionPayload($this->requestData(), $model));
 
         return $this->createResource($model->fresh());
+    }
+
+    public function massUpdate(): JsonResponse
+    {
+        $this->authorize('massUpdate', $this->getModel());
+
+        $model = $this->createModel();
+
+        $requestValidatorClass = $this->getRequestValidator();
+        /** @var LaravelCrudRequest $request */
+        $request = new $requestValidatorClass;
+
+        $this->onMassUpdate(new CrudActionPayload($this->requestData(), $model), $request);
+
+        return $this->returnSuccess();
+    }
+
+    public function massCreateOrUpdate(): JsonResponse
+    {
+        $this->authorize('massCreateOrUpdate', $this->getModel());
+
+        $model = $this->createModel();
+
+        $requestValidatorClass = $this->getRequestValidator();
+        /** @var LaravelCrudRequest $request */
+        $request = new $requestValidatorClass;
+
+        $this->onMassCreateOrUpdate(new CrudActionPayload($this->requestData(), $model), $request);
+
+        return $this->returnSuccess();
     }
 
     public function delete(string $id): JsonResponse
@@ -199,6 +229,16 @@ class LaravelCrudController extends BaseController
         return $this->getUpdateAction()->run($actionPayload);
     }
 
+    protected function onMassUpdate(ActionPayloadInterface $actionPayload, LaravelCrudRequest $request): ExecutableActionResponseContract
+    {
+        return $this->getMassUpdateAction($request)->run($actionPayload);
+    }
+
+    protected function onMassCreateOrUpdate(ActionPayloadInterface $actionPayload, LaravelCrudRequest $request): ExecutableActionResponseContract
+    {
+        return $this->getMassCreateOrUpdateAction($request)->run($actionPayload);
+    }
+
     protected function onDelete(ActionPayloadInterface $actionPayload): ExecutableActionResponseContract
     {
         return $this->getDeleteAction()->run($actionPayload);
@@ -219,14 +259,19 @@ class LaravelCrudController extends BaseController
         return $this->getRemoveRelationAction()->run($actionPayload);
     }
 
-    protected function returnNoContent(): JsonResponse
+    protected function returnSuccess(): JsonResponse
     {
-        return response()->json(null, self::HTTP_STATUS_EMPTY);
+        return response()->json(null, Response::HTTP_OK);
     }
 
     protected function returnSuccessCreated(): JsonResponse
     {
-        return response()->json(null, self::HTTP_STATUS_SUCCESS_CREATED);
+        return response()->json(null, Response::HTTP_CREATED);
+    }
+
+    protected function returnNoContent(): JsonResponse
+    {
+        return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
     protected function getRequestValidator(): string
@@ -264,9 +309,13 @@ class LaravelCrudController extends BaseController
      * Request validation is called on resolving Request class
      * @see FormRequestServiceProvider::boot()
      */
-    protected function resolveRequestValidator(): LaravelCrudRequest
+    protected function resolveRequestValidator(?string $requestValidator = null): LaravelCrudRequest
     {
-        return resolve($this->getRequestValidator());
+        if ($requestValidator === null) {
+            $requestValidator = $this->getRequestValidator();
+        }
+
+        return resolve($requestValidator);
     }
 
     protected function createModel(): Model
@@ -294,6 +343,20 @@ class LaravelCrudController extends BaseController
     protected function getUpdateAction(): ExecutableAction
     {
         return resolve(Update::class);
+    }
+
+    protected function getMassUpdateAction(LaravelCrudRequest $request): ExecutableAction
+    {
+        return resolve(MassUpdate::class, [
+            'request' => $request,
+        ]);
+    }
+
+    protected function getMassCreateOrUpdateAction(LaravelCrudRequest $request): ExecutableAction
+    {
+        return resolve(MassCreateOrUpdate::class, [
+            'request' => $request,
+        ]);
     }
 
     protected function getDeleteAction(): ExecutableAction
@@ -342,24 +405,16 @@ class LaravelCrudController extends BaseController
         return request()->all();
     }
 
-    protected function mergeModelDataToRequest(Model $model): void
+    protected function mergeModelDataToRequest(Model $model, string $requestValidatorClass): void
     {
-        $requestClassFqn = $this->getRequestValidator();
-
-        /** @var LaravelCrudRequest $requestClass */
-        $requestClass = new $requestClassFqn;
-
-        $relations = [];
-        foreach (array_keys($requestClass->rules()) as $fieldName) {
-            if ($model->isRelation($fieldName)) {
-                $relations[] = $fieldName;
-            }
+        if (config('laravel-crud-controller.merge_model_data_to_request') !== true) {
+            return;
         }
 
-        if (count($relations) > 0) {
-            $model->load($relations);
-        }
+        /** @var LoadModelDataMissingFromRequest $loadModelDataMissingFromRequest */
+        $loadModelDataMissingFromRequest = resolve(LoadModelDataMissingFromRequest::class);
 
-        request()->mergeIfMissing($model->toArray());
+        $modelData = $loadModelDataMissingFromRequest->load($model, $requestValidatorClass);
+        request()->mergeIfMissing($modelData);
     }
 }
