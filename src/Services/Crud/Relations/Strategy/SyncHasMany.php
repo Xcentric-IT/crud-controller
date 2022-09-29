@@ -25,16 +25,14 @@ class SyncHasMany implements SyncStrategyContract
         foreach ($relationsData as $related) {
             $id = $related['id'] ?? null;
 
-            if ($id === null) {
+            $subModel = $id !== null
+                ? $subModelClass->newModelQuery()->find($id)
+                : null;
+
+            if (!$subModel instanceof Model) {
                 $newSubModels[] = [
                     'data' => $related,
                 ];
-                continue;
-            }
-
-            $subModel = $subModelClass->newModelQuery()->find($id);
-
-            if (!$subModel instanceof Model) {
                 continue;
             }
 
