@@ -10,6 +10,8 @@ interface ActionPayloadInterface
 {
     public function getData(): array;
 
+    public function getOriginalData(): array;
+
     public function getModel(): Model;
 
     public function getAdditionalData(): array;
