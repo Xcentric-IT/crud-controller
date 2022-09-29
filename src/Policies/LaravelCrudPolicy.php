@@ -40,6 +40,16 @@ class LaravelCrudPolicy
         return true;
     }
 
+    public function massUpdate(?Authenticatable $user): bool
+    {
+        return true;
+    }
+
+    public function massCreateOrUpdate(?Authenticatable $user): bool
+    {
+        return true;
+    }
+
     public function massDelete(?Authenticatable $user): bool
     {
         return true;
