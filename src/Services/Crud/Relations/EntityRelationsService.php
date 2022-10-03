@@ -5,19 +5,10 @@ declare(strict_types=1);
 namespace XcentricItFoundation\LaravelCrudController\Services\Crud\Relations;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\DetachBelongsToMany;
-use XcentricItFoundation\LaravelCrudController\Services\Crud\Relations\Strategy\SyncWithoutDetachBelongsToMany;
 use XcentricItFoundation\LaravelCrudController\Services\RelationFieldCheckerService;
 
 class EntityRelationsService
 {
-    private const ADD_REMOVE_RELATIONS = [
-        BelongsToMany::class,
-        MorphToMany::class
-    ];
-
     public function __construct(
         protected RelationFieldCheckerService $relationFieldCheckerService,
         protected SyncRelationService $syncRelationService,
@@ -71,23 +62,8 @@ class EntityRelationsService
         $relationField = $params['relationField'];
         $add = $params['add'] ?? true;
 
-        if (!$this->relationFieldCheckerService->isRelationField($model, $relationField)) {
-            return;
-        }
-
-        $relationClass = $this->relationFieldCheckerService->getRelationClassByField($model, $relationField);
-        if (!in_array($relationClass, self::ADD_REMOVE_RELATIONS, true)) {
-            return;
-        }
-
-        $strategyClass = $add
-            ? SyncWithoutDetachBelongsToMany::class
-            : DetachBelongsToMany::class;
-
-        resolve($strategyClass)(
-            $model,
-            $relationField,
-            $data,
-        );
+        $add
+            ? $this->syncRelationService->createRelation($model, $relationField, $data)
+            : $this->syncRelationService->deleteRelation($model, $relationField, $data);
     }
 }
