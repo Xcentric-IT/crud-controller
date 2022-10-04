@@ -109,12 +109,9 @@ class LaravelCrudController extends BaseController
 
         $this->resolveRequestValidator($requestValidatorClass);
 
-        /** @var Model $freshModel */
-        $freshModel = $model->fresh();
+        $this->onUpdate(new CrudActionPayload($this->requestData(), $model, $model->fresh()->toArray()));
 
-        $this->onUpdate(new CrudActionPayload($this->requestData(), $model, $freshModel->toArray()));
-
-        return $this->createResource($freshModel);
+        return $this->createResource($model->fresh());
     }
 
     public function massUpdate(): JsonResponse

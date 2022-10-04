@@ -19,11 +19,9 @@ class CreateHasMany implements SyncStrategyContract
         $relation = $this->getRelation($model, $relationName);
         $subModelClass = $relation->getRelated();
 
-        $id = $data['id'] ?? null;
+        $id = $data['id'];
 
-        $subModel = $id !== null
-            ? $subModelClass->newModelQuery()->find($id)
-            : null;
+        $subModel = $subModelClass->newModelQuery()->find($id);
 
         if (!$subModel instanceof Model) {
             $relation->create($data);

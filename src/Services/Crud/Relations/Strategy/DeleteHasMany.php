@@ -19,10 +19,11 @@ class DeleteHasMany implements SyncStrategyContract
         $relation = $this->getRelation($model, $relationName);
         $subModelClass = $relation->getRelated();
 
-        $id = $data['id'] ?? null;
+        $id = $data['id'];
 
+        /** @var Model $subModel */
         $subModel = $subModelClass->newModelQuery()->findOrFail($id);
-        $subModel->delete($id);
+        $subModel->delete();
     }
 
     protected function getRelation(Model $model, string $relationName): HasMany
