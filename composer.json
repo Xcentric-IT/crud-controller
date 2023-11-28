@@ -1,11 +1,11 @@
 {
-    "name": "xcentric-it/laravel-crud-controller",
-    "description": "",
+    "name": "xcentric-it/crud-controller",
+    "description": "Generic CRUD controller for laravel.",
     "keywords": [
         "xcentric-it",
         "laravel-crud-controller"
     ],
-    "homepage": "https://gitlab.com/xcentric-it/bizhive/laravel-crud-controller",
+    "homepage": "https://github.com/xcentric-it/crud-controller",
     "license": "MIT",
     "type": "library",
     "authors": [
